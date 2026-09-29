@@ -20,9 +20,15 @@ function ask(question, { hidden = false } = {}) {
   });
 }
 
+// The Vercel CLI isn't always on PATH (e.g. in PowerShell), so use its install location when present.
+const path = require("path");
+const fs = require("fs");
+const VERCEL_CMD = path.join(process.env.APPDATA || "", "npm", "vercel.cmd");
+const VERCEL = fs.existsSync(VERCEL_CMD) ? `"${VERCEL_CMD}"` : "npx -y vercel";
+
 // args are fixed strings from this file, never user input.
 const vercel = (args, input) =>
-  execSync("vercel " + args.join(" "), { input, encoding: "utf8", stdio: [input == null ? "ignore" : "pipe", "pipe", "pipe"] });
+  execSync(`${VERCEL} ${args.join(" ")}`, { input, encoding: "utf8", stdio: [input == null ? "ignore" : "pipe", "pipe", "pipe"] });
 
 function setEnv(name, value) {
   try { vercel(["env", "rm", name, "production", "--yes"]); } catch (e) { /* not set yet */ }
