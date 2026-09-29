@@ -4,7 +4,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { exec, execFileSync } = require("child_process");
-const T = require("./puzzle-tools");
+const core = require("./lib/puzzle-core");
 
 const PORT = Number(process.env.PORT) || 5178;
 const dir = __dirname;
@@ -23,28 +23,24 @@ function readBody(req) {
   });
 }
 
+const PUZZLES_FILE = path.join(dir, "puzzles.js");
+const GAMES_FILE = path.join(dir, "games.js");
+const read = (f) => (fs.existsSync(f) ? fs.readFileSync(f, "utf8") : "");
+
 function info() {
-  const P = T.loadPuzzles();
-  return { today: T.today(), total: P.ARCHIVE.length + P.DATED.length, latest: P.DATED[0] };
+  const P = core.parsePuzzles(read(PUZZLES_FILE));
+  return { today: core.today(), total: core.totalCount(P), latest: P.DATED[0] };
 }
 
 async function handleApi(req, res, route) {
   try {
     const body = await readBody(req);
-    let id, game;
-    if (route === "link") {
-      id = T.extractSwellgarfoId(body.link);
-      if (!id) throw new Error("that doesn't look like a swellgarfo link");
-      if (T.allIds(T.loadPuzzles()).includes(id)) throw new Error("this puzzle is already on the site");
-      game = await T.fetchSwellgarfo(id);
-    } else {
-      game = T.buildOwnGame(body);
-      id = T.newOwnId();
-    }
-    const n = T.insertDated(body.date, id);
-    const games = T.loadGames();
-    games[id] = game;
-    T.writeGames(games);
+    const puzzlesSrc = read(PUZZLES_FILE);
+    const { id, game } = await core.resolveRequest(route, body, core.allIds(core.parsePuzzles(puzzlesSrc)));
+    const out = core.addPuzzle(puzzlesSrc, read(GAMES_FILE), body.date, id, game);
+    fs.writeFileSync(PUZZLES_FILE, out.puzzlesSrc);
+    fs.writeFileSync(GAMES_FILE, out.gamesSrc);
+    const n = out.n;
     console.log(`Added puzzle #${n} (${body.date})`);
     send(res, 200, { ok: true, n, id, title: game.title, groups: game.groups });
   } catch (e) {
@@ -68,7 +64,7 @@ function publishStatus() {
 }
 
 function publish() {
-  const P = T.loadPuzzles();
+  const P = core.parsePuzzles(read(PUZZLES_FILE));
   if (git("status", "--porcelain", "--", ...DATA_FILES).trim()) {
     git("add", "--", ...DATA_FILES);
     git("commit", "-m", `Add puzzles (now ${P.ARCHIVE.length + P.DATED.length}, latest ${P.DATED[0][0]})`);

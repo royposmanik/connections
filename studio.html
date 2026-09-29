@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>סטודיו לחידות</title>
+<meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -73,6 +74,10 @@
   .success h2 { font-size: 28px; margin: 0 0 8px; }
   .success .actions { justify-content: center; }
   [hidden] { display: none !important; }
+  .head-links { display: flex; gap: 16px; }
+  .login { max-width: 420px; margin: 40px auto; }
+  .login h2 { margin: 0 0 4px; font-size: 24px; }
+  input[type=password] { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-size: 16px; margin-bottom: 8px; }
   textarea {
     width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg);
     font: inherit; font-size: 16px; color: inherit; resize: vertical; margin-bottom: 14px;
@@ -97,8 +102,24 @@
 <div class="wrap">
   <header>
     <h1>סטודיו לחידות</h1>
-    <a href="/site/index.html" target="_blank">לאתר ←</a>
+    <nav class="head-links">
+      <a id="siteLink" href="/site/index.html" target="_blank">לאתר ←</a>
+      <a id="logoutLink" href="#" hidden>יציאה</a>
+    </nav>
   </header>
+
+  <!-- ===== Login (online studio only) ===== -->
+  <section id="login" class="card login" hidden>
+    <h2>🔒 כניסה לסטודיו</h2>
+    <p class="sub" id="loginNote">הסטודיו פתוח רק לך.</p>
+    <form id="loginForm">
+      <label for="password">סיסמה</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+      <div class="actions"><button class="btn primary" type="submit" id="loginBtn">כניסה</button><span class="msg" id="loginMsg"></span></div>
+    </form>
+  </section>
+
+  <div id="app" hidden>
   <p class="sub" id="sub">&nbsp;</p>
 
   <div class="publish" id="publishBar">
@@ -167,11 +188,17 @@
       <button class="btn ghost sm" id="another">להוסיף עוד חידה</button>
     </div>
   </section>
+  </div>
 </div>
 
 <script>
 (function () {
   const $ = (s) => document.querySelector(s);
+  // Same page runs locally (studio.js on this computer) and online (Vercel, password-protected).
+  const LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
+  const SITE = LOCAL ? "/site/index.html" : "/";
+  const OFFLINE = LOCAL ? "הסטודיו לא פועל. הפעילו שוב את puzzle-studio.cmd" : "אין חיבור לשרת. נסו שוב.";
+  $("#siteLink").href = SITE;
   const LEVELS = [["צהוב", "הכי קל"], ["ירוק", ""], ["כחול", ""], ["סגול", "הכי מתעתע"]];
   const DRAFT_KEY = "studio-draft";
 
@@ -259,6 +286,7 @@
   // ---------- Server calls ----------
   async function post(url, body) {
     const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (r.status === 401 && !LOCAL) { showLogin(); throw new Error("צריך להתחבר מחדש"); }
     return r.json();
   }
   const HEB_ERR = {
@@ -268,17 +296,21 @@
     "puzzle not found on swellgarfo": "לא הצלחתי לטעון את החידה מ-swellgarfo",
     "date is older than every dated puzzle on the site": "התאריך מוקדם מכל החידות באתר",
     "date must be D/M/YYYY": "תאריך לא תקין",
+    "wrong password": "סיסמה שגויה",
+    "studio is not configured": "הסטודיו עוד לא הוגדר (חסרים משתני סביבה ב-Vercel)",
   };
   const errText = (e) => HEB_ERR[e] || e;
 
-  let liveUrl = "https://connections-roy.vercel.app/";
+  let liveUrl = LOCAL ? "https://connections-roy.vercel.app/" : location.origin + "/";
+  let lastId = null;
   // Swellgarfo titles are often just a date or "חידה #5"; only real titles go into the message.
   const isRealTitle = (t) => t && !/^\d+[\/.]\d+/.test(t) && !/^חידה( ל\S+)? #\d+$/.test(t);
 
-  function showDone(n, title) {
+  function showDone(n, title, id) {
+    lastId = id;
     $("#tab-create").hidden = true; $("#tab-link").hidden = true; $("#done").hidden = false;
     $("#doneTitle").textContent = `נוספה חידה #${n}`;
-    $("#playLink").href = `/site/index.html#/p/${n}`;
+    $("#playLink").href = `${SITE}#/p/${n}`;
     // Keep a Hebrew word first on each line so WhatsApp lays the line out right-to-left.
     const line2 = `חידה #${n}` + (isRealTitle(title) ? ` · ${title}` : "");
     $("#waText").value = ["🧩 חידה חדשה ב-4x4", line2, `${liveUrl}#/p/${n}`].join("\n");
@@ -291,13 +323,17 @@
   $("#waBtn").addEventListener("click", async () => {
     const text = $("#waText").value.trim();
     const win = window.open("", "_blank"); // open now, while we still have the click (avoids popup blocking)
-    $("#waBtn").disabled = true; $("#waMsg").className = "msg"; $("#waMsg").textContent = "מפרסם…";
+    $("#waBtn").disabled = true; $("#waMsg").className = "msg"; $("#waMsg").textContent = LOCAL ? "מפרסם…" : "מחכה שהאתר יתעדכן…";
     try {
-      const s = await (await fetch("/api/status")).json();
-      if (!s.ok) throw new Error("לא ניתן לפרסם מהתיקייה הזאת");
-      if (s.pending) {
-        const r = await post("/api/publish", {});
-        if (!r.ok) throw new Error("הפרסום נכשל: " + r.error);
+      if (LOCAL) {
+        const s = await (await fetch("/api/status")).json();
+        if (!s.ok) throw new Error("לא ניתן לפרסם מהתיקייה הזאת");
+        if (s.pending) {
+          const r = await post("/api/publish", {});
+          if (!r.ok) throw new Error("הפרסום נכשל: " + r.error);
+        }
+      } else {
+        await waitUntilLive(lastId);
       }
       $("#waMsg").className = "msg ok";
       $("#waMsg").textContent = "✓ פורסם. בחרו את הקבוצה בוואטסאפ ולחצו שלח.";
@@ -310,6 +346,17 @@
     }
     $("#waBtn").disabled = false;
   });
+  // Online: saving already committed the puzzle; wait for Vercel's redeploy so the link works when sent.
+  async function waitUntilLive(id) {
+    for (let i = 0; i < 40; i++) {
+      try {
+        const src = await (await fetch("/puzzles.js?t=" + Date.now(), { cache: "no-store" })).text();
+        if (src.includes(JSON.stringify(id))) return;
+      } catch (e) {}
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+    throw new Error("האתר עוד לא התעדכן. נסו שוב בעוד דקה.");
+  }
   $("#another").addEventListener("click", () => document.querySelector('.tab[aria-selected="true"]').click());
 
   $("#save").addEventListener("click", async () => {
@@ -323,9 +370,9 @@
       document.querySelectorAll("#tab-create input[type=text]").forEach((i) => (i.value = ""));
       try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
       order = shuffle(order); refresh();
-      showDone(r.n, f.title);
+      showDone(r.n, f.title, r.id);
     } catch (e) {
-      $("#msg").className = "msg error"; $("#msg").textContent = e.message.includes("fetch") ? "הסטודיו לא פועל. הפעילו שוב את puzzle-studio.cmd" : e.message;
+      $("#msg").className = "msg error"; $("#msg").textContent = e.message.includes("fetch") ? OFFLINE : e.message;
       $("#save").disabled = false;
     }
   });
@@ -338,9 +385,9 @@
       const r = await post("/api/link", { link, date: fromInputDate(date) });
       if (!r.ok) throw new Error(errText(r.error));
       $("#linkMsg").textContent = ""; $("#link").value = "";
-      showDone(r.n, r.title);
+      showDone(r.n, r.title, r.id);
     } catch (e) {
-      $("#linkMsg").className = "msg error"; $("#linkMsg").textContent = e.message.includes("fetch") ? "הסטודיו לא פועל. הפעילו שוב את puzzle-studio.cmd" : e.message;
+      $("#linkMsg").className = "msg error"; $("#linkMsg").textContent = e.message.includes("fetch") ? OFFLINE : e.message;
     }
     $("#saveLink").disabled = false;
   });
@@ -348,6 +395,7 @@
   async function loadInfo() {
     try {
       const i = await (await fetch("/api/info")).json();
+      if (!i.total) return null;
       $("#sub").textContent = `כרגע יש באתר ${i.total} חידות. האחרונה פורסמה ב-${i.latest[0]}.`;
       return i;
     } catch (e) { return null; }
@@ -355,6 +403,12 @@
 
   // ---------- Publish ----------
   async function loadStatus() {
+    if (!LOCAL) {
+      $("#pubText").textContent = "☁️ כל שמירה עולה ישר לאתר החי (תוך כחצי דקה).";
+      $("#liveLink").href = "/";
+      $("#publishBtn").hidden = true;
+      return;
+    }
     try {
       const s = await (await fetch("/api/status")).json();
       $("#liveLink").href = s.liveUrl;
@@ -380,9 +434,46 @@
     $("#publishBtn").disabled = false;
   });
 
+  // ---------- Login (online only) ----------
+  function showLogin(note) {
+    $("#app").hidden = true; $("#login").hidden = false; $("#logoutLink").hidden = true;
+    if (note) $("#loginNote").textContent = note;
+    $("#password").focus();
+  }
+  $("#loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("#loginBtn").disabled = true; $("#loginMsg").className = "msg"; $("#loginMsg").textContent = "בודק…";
+    try {
+      const r = await (await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: $("#password").value }) })).json();
+      if (!r.ok) throw new Error(errText(r.error));
+      $("#password").value = ""; $("#loginMsg").textContent = "";
+      startApp();
+    } catch (err) {
+      $("#loginMsg").className = "msg error"; $("#loginMsg").textContent = err.message.includes("fetch") ? OFFLINE : err.message;
+    }
+    $("#loginBtn").disabled = false;
+  });
+  $("#logoutLink").addEventListener("click", async (e) => {
+    e.preventDefault();
+    await fetch("/api/logout", { method: "POST" });
+    showLogin("יצאת מהסטודיו.");
+  });
+
   // ---------- Init ----------
-  loadStatus();
   (async () => {
+    if (!LOCAL) {
+      let s = null;
+      try { s = await (await fetch("/api/session", { cache: "no-store" })).json(); } catch (e) {}
+      if (!s) return showLogin(OFFLINE);
+      if (!s.configured) return showLogin(errText("studio is not configured"));
+      if (!s.authed) return showLogin();
+    }
+    startApp();
+  })();
+
+  async function startApp() {
+    $("#login").hidden = true; $("#app").hidden = false; $("#logoutLink").hidden = LOCAL;
+    loadStatus();
     const i = await loadInfo();
     const todayStr = i ? i.today : `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
     let draft = null;
@@ -391,7 +482,7 @@
     if (!$("#date").value) $("#date").value = toInputDate(todayStr);
     $("#linkDate").value = toInputDate(todayStr);
     refresh();
-  })();
+  }
 })();
 </script>
 </body>
