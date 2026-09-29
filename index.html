@@ -58,6 +58,8 @@
   .brand { font-weight: 700; font-size: 18px; text-decoration: none; display: flex; align-items: center; gap: 10px; }
   .mini-grid { display: grid; grid-template-columns: repeat(2, 10px); gap: 3px; }
   .mini-grid i { width: 10px; height: 10px; border-radius: 3px; display: block; }
+  .header-actions { display: flex; gap: 8px; }
+  .lang-btn { font-size: 14px; font-weight: 700; }
   .icon-btn {
     border: 1px solid var(--line); background: var(--surface); color: var(--text);
     width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 18px;
@@ -238,7 +240,10 @@
       </span>
       4x4
     </a>
-    <button class="icon-btn" id="themeBtn" aria-label="החלפת ערכת צבעים">◐</button>
+    <div class="header-actions">
+      <button class="icon-btn lang-btn" id="langBtn" data-i18n="langBtn" data-i18n-aria="langAria">EN</button>
+      <button class="icon-btn" id="themeBtn" data-i18n-aria="themeAria" aria-label="החלפת ערכת צבעים">◐</button>
+    </div>
   </header>
 
   <!-- ===== Home ===== -->
@@ -246,14 +251,14 @@
     <section class="hero">
       <div>
         <h1>4x4</h1>
-        <p class="lead">משחק הרביעיות שכבש את העולם. 16 מילים, 4 קבוצות, בלי הגבלת ניסיונות. כל החידות מכל הזמנים, כאן.</p>
+        <p class="lead" data-i18n="lead">משחק הרביעיות שכבש את העולם. 16 מילים, 4 קבוצות, בלי הגבלת ניסיונות. כל החידות מכל הזמנים, כאן.</p>
         <div class="cta-row">
-          <a class="btn primary" id="playLatest">לחידה האחרונה ←</a>
-          <button class="btn ghost" id="randomBtn">🎲 חידה אקראית</button>
+          <a class="btn primary" id="playLatest" data-i18n="playLatest">לחידה האחרונה ←</a>
+          <button class="btn ghost" id="randomBtn" data-i18n="random">🎲 חידה אקראית</button>
         </div>
       </div>
       <div class="demo" aria-hidden="true">
-        <div class="row lv0"><b>צבעים</b><span>אדום, כחול, ירוק, צהוב</span></div>
+        <div class="row lv0"><b data-i18n="demoTitle">צבעים</b><span data-i18n="demoWords">אדום, כחול, ירוק, צהוב</span></div>
         <div class="tile">?</div><div class="tile">?</div><div class="tile">?</div><div class="tile">?</div>
         <div class="tile">?</div><div class="tile">?</div><div class="tile">?</div><div class="tile">?</div>
         <div class="tile">?</div><div class="tile">?</div><div class="tile">?</div><div class="tile">?</div>
@@ -263,27 +268,27 @@
     <section class="latest">
       <div class="latest-main">
         <div>
-          <div class="label">החידה האחרונה</div>
+          <div class="label" data-i18n="latestLabel">החידה האחרונה</div>
           <div class="title" id="latestTitle"></div>
         </div>
         <a class="btn primary sm" id="latestBtn"></a>
       </div>
       <div class="stats">
-        <div class="stat"><b id="statSolved">0</b><span>נפתרו</span></div>
-        <div class="stat"><b id="statRate">–</b><span>ממוצע טעויות</span></div>
-        <div class="stat"><b id="statPerfect">0</b><span>בלי טעויות</span></div>
-        <div class="stat"><b id="statLeft">0</b><span>נשארו</span></div>
+        <div class="stat"><b id="statSolved">0</b><span data-i18n="statSolved">נפתרו</span></div>
+        <div class="stat"><b id="statRate">–</b><span data-i18n="statRate">ממוצע טעויות</span></div>
+        <div class="stat"><b id="statPerfect">0</b><span data-i18n="statPerfect">בלי טעויות</span></div>
+        <div class="stat"><b id="statLeft">0</b><span data-i18n="statLeft">נשארו</span></div>
       </div>
     </section>
 
     <section id="archive">
       <div class="archive-head">
-        <h2>כל החידות</h2>
-        <div class="controls" role="group" aria-label="סינון">
-          <button class="chip" data-filter="all" aria-pressed="true">הכל</button>
-          <button class="chip" data-filter="todo" aria-pressed="false">עוד לא פתרתי</button>
-          <button class="chip" data-filter="done" aria-pressed="false">סיימתי</button>
-          <button class="chip" data-filter="intl" aria-pressed="false" title="Puzzles playable without Hebrew">🌍 גם בלי עברית</button>
+        <h2 data-i18n="allPuzzles">כל החידות</h2>
+        <div class="controls" role="group" aria-label="סינון" data-i18n-aria="filterAria">
+          <button class="chip" data-filter="all" aria-pressed="true" data-i18n="fAll">הכל</button>
+          <button class="chip" data-filter="todo" aria-pressed="false" data-i18n="fTodo">עוד לא פתרתי</button>
+          <button class="chip" data-filter="done" aria-pressed="false" data-i18n="fDone">סיימתי</button>
+          <button class="chip" data-filter="intl" aria-pressed="false" title="Puzzles playable without Hebrew" data-i18n="fIntl">🌍 גם בלי עברית</button>
         </div>
       </div>
       <div class="progress" aria-hidden="true"><div id="progressBar"></div></div>
@@ -292,17 +297,17 @@
 
     <section class="about" id="about">
       <div>
-        <h2>איך משחקים?</h2>
+        <h2 data-i18n="howTitle">איך משחקים?</h2>
         <ol>
-          <li>בכל חידה 16 מילים שמסתתרות בהן 4 קבוצות של 4.</li>
-          <li>בוחרים 4 מילים שיש ביניהן קשר ולוחצים "שליחה".</li>
-          <li>אין הגבלה על מספר הניסיונות, אבל כל טעות נספרת. נתקעתם? אפשר לחשוף את הפתרון.</li>
-          <li>הקבוצות מדורגות מצהוב (הכי קל) ועד סגול (הכי מתעתע).</li>
+          <li data-i18n="how1">בכל חידה 16 מילים שמסתתרות בהן 4 קבוצות של 4.</li>
+          <li data-i18n="how2">בוחרים 4 מילים שיש ביניהן קשר ולוחצים "שליחה".</li>
+          <li data-i18n="how3">אין הגבלה על מספר הניסיונות, אבל כל טעות נספרת. נתקעתם? אפשר לחשוף את הפתרון.</li>
+          <li data-i18n="how4">הקבוצות מדורגות מצהוב (הכי קל) ועד סגול (הכי מתעתע).</li>
         </ol>
       </div>
       <div>
-        <h2>על האתר</h2>
-        <p>חידות 4x4 בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך.</p>
+        <h2 data-i18n="aboutTitle">על האתר</h2>
+        <p data-i18n="aboutText">חידות 4x4 בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך.</p>
       </div>
     </section>
   </main>
@@ -310,32 +315,32 @@
   <!-- ===== Game ===== -->
   <main id="game" class="game" hidden>
     <nav class="game-nav">
-      <a href="#/" id="backLink">→ כל החידות</a>
+      <a href="#/" id="backLink" data-i18n="back">→ כל החידות</a>
       <div class="pn">
-        <a id="prevLink">→ הקודמת</a>
-        <a id="nextLink">הבאה ←</a>
+        <a id="prevLink" data-i18n="prev">→ הקודמת</a>
+        <a id="nextLink" data-i18n="next">הבאה ←</a>
       </div>
     </nav>
     <div class="game-head">
       <h1 id="gTitle"></h1>
       <div class="meta" id="gMeta"></div>
     </div>
-    <p class="hint" id="gHint">מצאו ארבע קבוצות של ארבע מילים שיש ביניהן קשר.</p>
+    <p class="hint" id="gHint" data-i18n="hint">מצאו ארבע קבוצות של ארבע מילים שיש ביניהן קשר.</p>
     <div class="gboard" id="gBoard"></div>
     <div id="gPlay">
       <div class="mistakes" id="gMistakes"></div>
       <div class="gcontrols">
-        <button class="btn ghost sm" id="shuffleBtn">ערבוב</button>
-        <button class="btn ghost sm" id="clearBtn">ניקוי בחירה</button>
-        <button class="btn primary sm" id="submitBtn">שליחה</button>
+        <button class="btn ghost sm" id="shuffleBtn" data-i18n="shuffle">ערבוב</button>
+        <button class="btn ghost sm" id="clearBtn" data-i18n="clear">ניקוי בחירה</button>
+        <button class="btn primary sm" id="submitBtn" data-i18n="submit">שליחה</button>
       </div>
-      <button class="linkbtn" id="giveUpBtn">נתקעתי, להראות את הפתרון</button>
+      <button class="linkbtn" id="giveUpBtn" data-i18n="giveUp">נתקעתי, להראות את הפתרון</button>
     </div>
     <div id="gEnd"></div>
-    <div class="source"><a id="sourceLink" target="_blank" rel="noopener">לפתוח את החידה באתר המקורי</a></div>
+    <div class="source"><a id="sourceLink" target="_blank" rel="noopener" data-i18n="source">לפתוח את החידה באתר המקורי</a></div>
   </main>
 
-  <footer>© רועי פוסמניק · 4x4</footer>
+  <footer data-i18n="footer">© רועי פוסמניק · 4x4</footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -344,7 +349,6 @@
 <script>
 (function () {
   const BASE = "https://connections.swellgarfo.com/game/";
-  const MONTHS = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
   const EMOJI = ["🟨", "🟩", "🟦", "🟪"];
   const LEVEL_BY_COLOR = { "#fbd400": 0, "#69e352": 1, "#5492ff": 2, "#df7bea": 3 };
   const OWNER = "רועי פוסמניק";
@@ -352,6 +356,100 @@
   const STATE_KEY = "mh-game-";
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // ---------- Language ----------
+  // Site text only; the puzzles themselves stay in Hebrew.
+  const I18N = {
+    he: {
+      langBtn: "EN", langAria: "Switch to English", themeAria: "החלפת ערכת צבעים",
+      desc: "משחק הרביעיות שכבש את העולם – כל החידות מכל הזמנים במקום אחד.",
+      lead: "משחק הרביעיות שכבש את העולם. 16 מילים, 4 קבוצות, בלי הגבלת ניסיונות. כל החידות מכל הזמנים, כאן.",
+      playLatest: "לחידה האחרונה ←", random: "🎲 חידה אקראית",
+      demoTitle: "צבעים", demoWords: "אדום, כחול, ירוק, צהוב",
+      latestLabel: "החידה האחרונה", statSolved: "נפתרו", statRate: "ממוצע טעויות", statPerfect: "בלי טעויות", statLeft: "נשארו",
+      allPuzzles: "כל החידות", filterAria: "סינון",
+      fAll: "הכל", fTodo: "עוד לא פתרתי", fDone: "סיימתי", fIntl: "🌍 גם בלי עברית",
+      howTitle: "איך משחקים?",
+      how1: "בכל חידה 16 מילים שמסתתרות בהן 4 קבוצות של 4.",
+      how2: "בוחרים 4 מילים שיש ביניהן קשר ולוחצים \"שליחה\".",
+      how3: "אין הגבלה על מספר הניסיונות, אבל כל טעות נספרת. נתקעתם? אפשר לחשוף את הפתרון.",
+      how4: "הקבוצות מדורגות מצהוב (הכי קל) ועד סגול (הכי מתעתע).",
+      aboutTitle: "על האתר",
+      aboutText: "חידות 4x4 בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך.",
+      back: "→ כל החידות", prev: "→ הקודמת", next: "הבאה ←",
+      hint: "מצאו ארבע קבוצות של ארבע מילים שיש ביניהן קשר.",
+      shuffle: "ערבוב", clear: "ניקוי בחירה", submit: "שליחה", giveUp: "נתקעתי, להראות את הפתרון",
+      source: "לפתוח את החידה באתר המקורי", footer: "© רועי פוסמניק · 4x4",
+      puzzleN: "חידה #{n}", archiveGroup: "ארכיון · יוני–יולי 2025", archive: "ארכיון", count: "{n} חידות",
+      bPerfect: "מושלם", bSolved: "נפתר", bRevealed: "פתרון", bNew: "חדש",
+      viewAgain: "לראות שוב", resume: "להמשיך ←", play: "לשחק ←", by: "מאת {a}",
+      emptyTodo: "פתרת הכל! 🎉 חכו לחידה הבאה.", emptyDone: "עוד לא סיימת אף חידה.",
+      mistakes: "טעויות:", tried: "כבר ניסית את השילוב הזה", oneAway: "כמעט! חסרה אחת", notQuite: "לא בדיוק…",
+      confirmReveal: "לחשוף את הפתרון? החידה תסומן כלא פתורה.",
+      wonTitle: "כל הכבוד! 🎉", lostTitle: "זה הפתרון",
+      sub0: "בלי אף טעות. מושלם!", sub1: "עם טעות אחת בלבד.", subN: "עם {n} טעויות.", subLost: "לא נורא, החידה הבאה שלך.",
+      nextPuzzle: "לחידה הבאה ←", toAll: "לכל החידות", share: "שיתוף התוצאה", replay: "לשחק שוב", copied: "התוצאה הועתקה",
+      months: ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"],
+    },
+    en: {
+      langBtn: "עב", langAria: "לעברית", themeAria: "Toggle color theme",
+      desc: "The word-grouping game that took over the world – every puzzle ever, in one place.",
+      lead: "The word-grouping game that took over the world. 16 words, 4 groups, unlimited tries. Every puzzle ever, right here.",
+      playLatest: "Latest puzzle →", random: "🎲 Random puzzle",
+      demoTitle: "Colors", demoWords: "Red, Blue, Green, Yellow",
+      latestLabel: "Latest puzzle", statSolved: "Solved", statRate: "Avg. mistakes", statPerfect: "Perfect", statLeft: "Left",
+      allPuzzles: "All puzzles", filterAria: "Filter",
+      fAll: "All", fTodo: "Not solved yet", fDone: "Finished", fIntl: "🌍 No Hebrew needed",
+      howTitle: "How to play",
+      how1: "Each puzzle has 16 words hiding 4 groups of 4.",
+      how2: "Pick 4 words that share a connection and press \"Submit\".",
+      how3: "Unlimited tries, but every mistake counts. Stuck? You can reveal the answer.",
+      how4: "Groups are ranked from yellow (easiest) to purple (trickiest).",
+      aboutTitle: "About",
+      aboutText: "Hebrew 4x4 puzzles, written by Roy Posmanik (and sometimes friends) since June 2025. A new puzzle goes up a few times a week. The puzzles themselves are in Hebrew; look for 🌍 to find ones you can play without it. The site remembers which puzzles you've solved (in your browser only), so you know where to pick up.",
+      back: "← All puzzles", prev: "← Previous", next: "Next →",
+      hint: "Find four groups of four words that share a connection.",
+      shuffle: "Shuffle", clear: "Deselect", submit: "Submit", giveUp: "I'm stuck, show the answer",
+      source: "Open on the original site", footer: "© Roy Posmanik · 4x4",
+      puzzleN: "Puzzle #{n}", archiveGroup: "Archive · Jun–Jul 2025", archive: "Archive", count: "{n} puzzles",
+      bPerfect: "Perfect", bSolved: "Solved", bRevealed: "Revealed", bNew: "New",
+      viewAgain: "View again", resume: "Continue →", play: "Play →", by: "by {a}",
+      emptyTodo: "You've solved them all! 🎉 Wait for the next one.", emptyDone: "You haven't finished any puzzles yet.",
+      mistakes: "Mistakes:", tried: "You already tried that combination", oneAway: "One away!", notQuite: "Not quite…",
+      confirmReveal: "Reveal the answer? This puzzle will be marked as unsolved.",
+      wonTitle: "Well done! 🎉", lostTitle: "Here's the answer",
+      sub0: "No mistakes. Perfect!", sub1: "With just one mistake.", subN: "With {n} mistakes.", subLost: "No worries, you'll get the next one.",
+      nextPuzzle: "Next puzzle →", toAll: "All puzzles", share: "Share result", replay: "Play again", copied: "Result copied",
+      months: ["January","February","March","April","May","June","July","August","September","October","November","December"],
+    },
+  };
+  function detectLang() {
+    const q = new URLSearchParams(location.search).get("lang");
+    if (q === "en" || q === "he") return q;
+    if (/\/en\/?$/.test(location.pathname)) return "en";
+    try { const saved = localStorage.getItem("lang"); if (saved === "en" || saved === "he") return saved; } catch (e) {}
+    return "he";
+  }
+  let lang = detectLang();
+  const t = (k, v = {}) => String(I18N[lang][k]).replace(/\{(\w+)\}/g, (_, x) => v[x]);
+  function applyLang() {
+    const html = document.documentElement;
+    html.lang = lang;
+    html.dir = lang === "he" ? "rtl" : "ltr";
+    document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll("[data-i18n-aria]").forEach((el) => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
+    document.querySelector('meta[name="description"]').content = t("desc");
+  }
+  applyLang();
+  $("#langBtn").addEventListener("click", () => {
+    lang = lang === "he" ? "en" : "he";
+    try { localStorage.setItem("lang", lang); } catch (e) {}
+    const url = new URL(location.href);
+    if (lang === "en") url.searchParams.set("lang", "en"); else url.searchParams.delete("lang");
+    history.replaceState(null, "", url);
+    applyLang();
+    route();
+  });
 
   // ---------- Data ----------
   const list = [];
@@ -467,7 +565,7 @@
       const p = list[i];
       const key = p.date ? `${p.date.y}-${p.date.m}` : "archive";
       if (!byKey.has(key)) {
-        const g = { title: p.date ? `${MONTHS[p.date.m - 1]} ${p.date.y}` : "ארכיון · יוני–יולי 2025", items: [] };
+        const g = { title: p.date ? `${I18N[lang].months[p.date.m - 1]} ${p.date.y}` : t("archiveGroup"), items: [] };
         byKey.set(key, g); out.push(g);
       }
       byKey.get(key).items.push(p);
@@ -476,10 +574,10 @@
   }
 
   function statusBadge(p, s) {
-    if (s.status === "won") return `<span class="badge won">✓ ${s.mistakes === 0 ? "מושלם" : "נפתר"}</span>`;
-    if (s.status === "lost") return `<span class="badge lost">פתרון</span>`;
+    if (s.status === "won") return `<span class="badge won">✓ ${s.mistakes === 0 ? t("bPerfect") : t("bSolved")}</span>`;
+    if (s.status === "lost") return `<span class="badge lost">${t("bRevealed")}</span>`;
     if (s.status === "playing") return `<span class="badge">${s.solved.length}/4</span>`;
-    if (p === newest) return `<span class="badge new">חדש</span>`;
+    if (p === newest) return `<span class="badge new">${t("bNew")}</span>`;
     return "";
   }
 
@@ -496,9 +594,9 @@
     $("#progressBar").style.width = ((won + lost) / list.length * 100) + "%";
 
     const ns = loadState(newest);
-    $("#latestTitle").textContent = `חידה #${newest.n} · ${fmt(newest.date)}`;
+    $("#latestTitle").textContent = `${t("puzzleN", { n: newest.n })} · ${fmt(newest.date)}`;
     $("#latestBtn").href = "#/p/" + newest.n;
-    $("#latestBtn").textContent = ns.status === "won" || ns.status === "lost" ? "לראות שוב" : ns.status === "playing" ? "להמשיך ←" : "לשחק ←";
+    $("#latestBtn").textContent = ns.status === "won" || ns.status === "lost" ? t("viewAgain") : ns.status === "playing" ? t("resume") : t("play");
 
     const container = $("#months");
     container.innerHTML = "";
@@ -510,7 +608,7 @@
       shown += items.length;
       const sec = document.createElement("div");
       sec.className = "month";
-      sec.innerHTML = `<h3>${g.title} <small>${items.length} חידות</small></h3><div class="grid"></div>`;
+      sec.innerHTML = `<h3>${g.title} <small>${t("count", { n: items.length })}</small></h3><div class="grid"></div>`;
       const grid = sec.querySelector(".grid");
       for (const p of items) {
         const s = loadState(p);
@@ -519,15 +617,15 @@
         a.className = `p lv${p.n % 4}` + (finished(p) ? " done" : "");
         a.href = p.groups ? "#/p/" + p.n : p.url;
         if (!p.groups) { a.target = "_blank"; a.rel = "noopener"; }
-        const extra = p.title || (p.author ? "מאת " + p.author : "");
+        const extra = p.title || (p.author ? t("by", { a: p.author }) : "");
         const intl = p.intl ? `<span class="intl" title="Playable without Hebrew">🌍 EN</span>` : "";
-        a.innerHTML = `<div class="head"><div class="num">#${p.n}</div>${statusBadge(p, s)}</div><div class="date">${p.date ? fmt(p.date) : "ארכיון"}${intl}</div>
-          ${extra ? `<div class="extra" title="${esc(extra)}">${esc(extra)}</div>` : ""}`;
+        a.innerHTML = `<div class="head"><div class="num">#${p.n}</div>${statusBadge(p, s)}</div><div class="date">${p.date ? fmt(p.date) : t("archive")}${intl}</div>
+          ${extra ? `<div class="extra" dir="auto" title="${esc(extra)}">${esc(extra)}</div>` : ""}`;
         grid.appendChild(a);
       }
       container.appendChild(sec);
     }
-    if (!shown) container.innerHTML = `<div class="empty">${filter === "todo" ? "פתרת הכל! 🎉 חכו לחידה הבאה." : "עוד לא סיימת אף חידה."}</div>`;
+    if (!shown) container.innerHTML = `<div class="empty">${filter === "todo" ? t("emptyTodo") : t("emptyDone")}</div>`;
   }
 
   // ---------- Game ----------
@@ -536,11 +634,11 @@
   function openGame(p) {
     lastGameN = p.n;
     cur = { p, s: loadState(p), sel: new Set(), busy: false, revealed: null, animate: -1 };
-    $("#gTitle").textContent = `חידה #${p.n}`;
+    $("#gTitle").textContent = t("puzzleN", { n: p.n });
     const meta = [];
     if (p.date) meta.push(fmt(p.date));
-    if (p.title) meta.push(`<b>${esc(p.title)}</b>`);
-    if (p.author) meta.push(`מאת <b>${esc(p.author)}</b>`);
+    if (p.title) meta.push(`<b dir="auto">${esc(p.title)}</b>`);
+    if (p.author) meta.push(t("by", { a: `<b dir="auto">${esc(p.author)}</b>` }));
     if (p.intl) meta.push(`<span class="intl">🌍 Playable without Hebrew</span>`);
     $("#gMeta").innerHTML = meta.join(" · ");
     const prev = byN(p.n - 1), next = byN(p.n + 1);
@@ -577,6 +675,7 @@
       const g = p.groups[lvl];
       const r = document.createElement("div");
       r.className = `grow lv${lvl}` + (i === cur.animate ? " enter" : "");
+      r.dir = "auto";
       r.innerHTML = `<b>${esc(g.desc)}</b><span>${g.words.map(esc).join(", ")}</span>`;
       board.appendChild(r);
     });
@@ -587,6 +686,7 @@
         const w = p.words[idx];
         const b = document.createElement("button");
         b.className = "gtile " + sizeClass(w);
+        b.dir = "auto";
         b.dataset.idx = idx;
         b.textContent = w;
         b.setAttribute("aria-pressed", String(sel.has(idx)));
@@ -598,7 +698,7 @@
     const over = s.status === "won" || s.status === "lost";
     $("#gPlay").hidden = over;
     $("#gHint").hidden = over || s.guesses.length > 0;
-    $("#gMistakes").innerHTML = `טעויות: <b>${s.mistakes}</b>`;
+    $("#gMistakes").innerHTML = `${t("mistakes")} <b>${s.mistakes}</b>`;
     $("#submitBtn").disabled = sel.size !== 4 || cur.busy;
     $("#clearBtn").disabled = sel.size === 0 || cur.busy;
     $("#gEnd").innerHTML = over && (cur.revealed == null || cur.revealed >= 4) ? endCard() : "";
@@ -637,7 +737,7 @@
     if (cur.busy || sel.size !== 4) return;
     const idx = [...sel].sort((a, b) => a - b);
     const key = idx.join(",");
-    if (s.guesses.some((g) => g.key === key)) { toast("כבר ניסית את השילוב הזה"); return; }
+    if (s.guesses.some((g) => g.key === key)) { toast(t("tried")); return; }
     const levels = idx.map((i) => i >> 2);
     s.guesses.push({ key, levels });
     s.status = "playing";
@@ -665,7 +765,7 @@
     s.mistakes++;
     const oneAway = counts.includes(3);
     tileEls().forEach((el) => { el.classList.remove("hop"); el.classList.add("shake"); });
-    toast(oneAway ? "כמעט! חסרה אחת" : "לא בדיוק…");
+    toast(oneAway ? t("oneAway") : t("notQuite"));
     saveState(p, s);
     const counter = $("#gMistakes b");
     counter.textContent = s.mistakes;
@@ -679,7 +779,7 @@
   $("#giveUpBtn").addEventListener("click", giveUp);
   async function giveUp() {
     const { p, s, sel } = cur;
-    if (cur.busy || !confirm("לחשוף את הפתרון? החידה תסומן כלא פתורה.")) return;
+    if (cur.busy || !confirm(t("confirmReveal"))) return;
     cur.busy = true;
     s.status = "lost";
     saveState(p, s);
@@ -715,18 +815,18 @@
     const { s } = cur;
     const won = s.status === "won";
     const sub = won
-      ? (s.mistakes === 0 ? "בלי אף טעות. מושלם!" : s.mistakes === 1 ? "עם טעות אחת בלבד." : `עם ${s.mistakes} טעויות.`)
-      : "לא נורא, החידה הבאה שלך.";
+      ? (s.mistakes === 0 ? t("sub0") : s.mistakes === 1 ? t("sub1") : t("subN", { n: s.mistakes }))
+      : t("subLost");
     const next = nextToPlay();
     const grid = s.guesses.map((g) => `<div>${g.levels.map((l) => `<i class="lv${l}"></i>`).join("")}</div>`).join("");
     return `<div class="endcard">
-      <h2>${won ? "כל הכבוד! 🎉" : "זה הפתרון"}</h2>
+      <h2>${won ? t("wonTitle") : t("lostTitle")}</h2>
       <p>${sub}</p>
       <div class="emoji">${grid}</div>
       <div class="cta-row">
-        ${next ? `<a class="btn primary sm" href="#/p/${next.n}">לחידה הבאה ←</a>` : `<a class="btn primary sm" href="#/">לכל החידות</a>`}
-        <button class="btn ghost sm" id="shareBtn">שיתוף התוצאה</button>
-        <button class="btn ghost sm" id="replayBtn">לשחק שוב</button>
+        ${next ? `<a class="btn primary sm" href="#/p/${next.n}">${t("nextPuzzle")}</a>` : `<a class="btn primary sm" href="#/">${t("toAll")}</a>`}
+        <button class="btn ghost sm" id="shareBtn">${t("share")}</button>
+        <button class="btn ghost sm" id="replayBtn">${t("replay")}</button>
       </div>
     </div>`;
   }
@@ -737,7 +837,7 @@
       try {
         if (navigator.share) { await navigator.share({ text }); return; }
         await navigator.clipboard.writeText(text);
-        toast("התוצאה הועתקה");
+        toast(t("copied"));
       } catch (e) {}
     });
     $("#replayBtn").addEventListener("click", () => {
