@@ -578,6 +578,9 @@
       }
       byKey.get(key).items.push(p);
     }
+    // Months stay newest-first, but inside a month puzzles run by number in reading order
+    // (right-to-left in Hebrew, left-to-right in English; the grid follows the page direction).
+    out.forEach((g) => g.items.reverse());
     return out;
   }
 
