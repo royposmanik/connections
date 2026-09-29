@@ -3,7 +3,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
-const { exec } = require("child_process");
+const { exec, execFileSync } = require("child_process");
 const T = require("./puzzle-tools");
 
 const PORT = 5178;
@@ -52,8 +52,38 @@ async function handleApi(req, res, route) {
   }
 }
 
+const LIVE_URL = "https://royposmanik.github.io/connections/";
+const DATA_FILES = ["puzzles.js", "games.js"];
+const git = (...args) => execFileSync("git", args, { cwd: dir, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+
+// Unpublished = data files changed locally, or committed but not yet pushed.
+function publishStatus() {
+  try {
+    const changed = git("status", "--porcelain", "--", ...DATA_FILES).trim() !== "";
+    const ahead = Number(git("rev-list", "--count", "@{u}..HEAD").trim()) > 0;
+    return { ok: true, pending: changed || ahead, liveUrl: LIVE_URL };
+  } catch (e) {
+    return { ok: false, pending: false, liveUrl: LIVE_URL, error: "git is not set up in this folder" };
+  }
+}
+
+function publish() {
+  const P = T.loadPuzzles();
+  if (git("status", "--porcelain", "--", ...DATA_FILES).trim()) {
+    git("add", "--", ...DATA_FILES);
+    git("commit", "-m", `Add puzzles (now ${P.ARCHIVE.length + P.DATED.length}, latest ${P.DATED[0][0]})`);
+  }
+  git("push");
+}
+
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
+  if (url.pathname === "/api/status") return send(res, 200, publishStatus());
+  if (req.method === "POST" && url.pathname === "/api/publish") {
+    try { publish(); console.log("Published to " + LIVE_URL); send(res, 200, { ok: true, liveUrl: LIVE_URL }); }
+    catch (e) { send(res, 500, { ok: false, error: String(e.stderr || e.message).trim().split("\n").pop() }); }
+    return;
+  }
   if (req.method === "POST" && url.pathname === "/api/link") return handleApi(req, res, "link");
   if (req.method === "POST" && url.pathname === "/api/create") return handleApi(req, res, "create");
   if (url.pathname === "/api/info") return send(res, 200, info());

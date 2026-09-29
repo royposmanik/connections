@@ -73,6 +73,14 @@
   .success h2 { font-size: 28px; margin: 0 0 8px; }
   .success .actions { justify-content: center; }
   [hidden] { display: none !important; }
+  .publish {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: -8px 0 24px;
+    padding: 12px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); font-size: 15px;
+  }
+  .publish #pubText { flex: 1; min-width: 180px; }
+  .publish.pending { border-color: var(--accent); }
+  .publish a { color: var(--muted); font-weight: 500; text-decoration: none; }
+  .publish a:hover { color: var(--text); }
 
   @media (max-width: 600px) {
     .row3 { grid-template-columns: 1fr; }
@@ -87,6 +95,12 @@
     <a href="/site/index.html" target="_blank">לאתר ←</a>
   </header>
   <p class="sub" id="sub">&nbsp;</p>
+
+  <div class="publish" id="publishBar">
+    <span id="pubText">בודק…</span>
+    <button class="btn primary sm" id="publishBtn" hidden>🚀 פרסום לאתר</button>
+    <a id="liveLink" target="_blank">לאתר החי ←</a>
+  </div>
 
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" aria-selected="true" data-tab="create">✏️ חידה חדשה</button>
@@ -251,6 +265,7 @@
     $("#doneTitle").textContent = `נוספה חידה #${n}`;
     $("#playLink").href = `/site/index.html#/p/${n}`;
     loadInfo();
+    loadStatus();
   }
   $("#another").addEventListener("click", () => document.querySelector('.tab[aria-selected="true"]').click());
 
@@ -295,7 +310,34 @@
     } catch (e) { return null; }
   }
 
+  // ---------- Publish ----------
+  async function loadStatus() {
+    try {
+      const s = await (await fetch("/api/status")).json();
+      $("#liveLink").href = s.liveUrl;
+      $("#publishBar").classList.toggle("pending", s.pending);
+      $("#publishBtn").hidden = !s.pending;
+      $("#pubText").textContent = !s.ok ? "⚠️ לא ניתן לפרסם מהתיקייה הזאת"
+        : s.pending ? "יש חידות חדשות שעוד לא עלו לאתר החי." : "✓ האתר החי מעודכן.";
+    } catch (e) { $("#pubText").textContent = "הסטודיו לא פועל. הפעילו שוב את puzzle-studio.cmd"; }
+  }
+  $("#publishBtn").addEventListener("click", async () => {
+    $("#publishBtn").disabled = true;
+    $("#pubText").textContent = "מפרסם…";
+    try {
+      const r = await post("/api/publish", {});
+      if (!r.ok) throw new Error(r.error);
+      $("#pubText").textContent = "✓ פורסם! האתר החי יתעדכן תוך דקה-שתיים.";
+      $("#publishBar").classList.remove("pending");
+      $("#publishBtn").hidden = true;
+    } catch (e) {
+      $("#pubText").textContent = "✗ הפרסום נכשל: " + e.message;
+    }
+    $("#publishBtn").disabled = false;
+  });
+
   // ---------- Init ----------
+  loadStatus();
   (async () => {
     const i = await loadInfo();
     const todayStr = i ? i.today : `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
