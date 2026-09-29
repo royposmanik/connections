@@ -327,7 +327,7 @@
     try {
       const r = await post("/api/publish", {});
       if (!r.ok) throw new Error(r.error);
-      $("#pubText").textContent = "✓ פורסם! האתר החי יתעדכן תוך דקה-שתיים.";
+      $("#pubText").textContent = "✓ פורסם! האתר החי יתעדכן תוך כחצי דקה.";
       $("#publishBar").classList.remove("pending");
       $("#publishBtn").hidden = true;
     } catch (e) {

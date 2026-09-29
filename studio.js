@@ -52,7 +52,7 @@ async function handleApi(req, res, route) {
   }
 }
 
-const LIVE_URL = "https://royposmanik.github.io/connections/";
+const LIVE_URL = "https://connections-roy.vercel.app/";
 const DATA_FILES = ["puzzles.js", "games.js"];
 const git = (...args) => execFileSync("git", args, { cwd: dir, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 
