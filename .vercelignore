@@ -1,3 +1,5 @@
 puzzle-studio.cmd
 studio.js
 fetch-puzzles.js
+setup-studio.cmd
+setup-studio.js
