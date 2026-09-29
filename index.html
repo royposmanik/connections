@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>מה הקשר?</title>
+<title>4x4</title>
 <meta name="description" content="משחק הרביעיות שכבש את המדינה – כל החידות מכל הזמנים במקום אחד.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -236,7 +236,7 @@
       <span class="mini-grid" aria-hidden="true">
         <i class="lv0"></i><i class="lv1"></i><i class="lv2"></i><i class="lv3"></i>
       </span>
-      מה הקשר?
+      4x4
     </a>
     <button class="icon-btn" id="themeBtn" aria-label="החלפת ערכת צבעים">◐</button>
   </header>
@@ -245,7 +245,7 @@
   <main id="home">
     <section class="hero">
       <div>
-        <h1>מה הקשר?</h1>
+        <h1>4x4</h1>
         <p class="lead">משחק הרביעיות שכבש את המדינה. 16 מילים, 4 קבוצות, בלי הגבלת ניסיונות. כל החידות מכל הזמנים, כאן.</p>
         <div class="cta-row">
           <a class="btn primary" id="playLatest">לחידה האחרונה ←</a>
@@ -302,7 +302,7 @@
       </div>
       <div>
         <h2>על האתר</h2>
-        <p>חידות "מה הקשר?" בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך.</p>
+        <p>חידות 4x4 בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך.</p>
       </div>
     </section>
   </main>
@@ -335,7 +335,7 @@
     <div class="source"><a id="sourceLink" target="_blank" rel="noopener">לפתוח את החידה באתר המקורי</a></div>
   </main>
 
-  <footer>© רועי פוסמניק · מה הקשר?</footer>
+  <footer>© רועי פוסמניק · 4x4</footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -700,7 +700,7 @@
   function shareText() {
     const { p, s } = cur;
     const grid = s.guesses.map((g) => g.levels.map((l) => EMOJI[l]).join("")).join("\n");
-    return `מה הקשר? #${p.n}\n${grid}`;
+    return `4x4 #${p.n}\n${grid}`;
   }
 
   function nextToPlay() {
