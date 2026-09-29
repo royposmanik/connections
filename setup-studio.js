@@ -21,10 +21,17 @@ function ask(question, { hidden = false } = {}) {
 }
 
 // The Vercel CLI isn't always on PATH (e.g. in PowerShell), so use its install location when present.
+// Some terminals also point APPDATA elsewhere, which hides the saved Vercel login; check the usual
+// Roaming folder too and pass the login folder explicitly.
 const path = require("path");
 const fs = require("fs");
-const VERCEL_CMD = path.join(process.env.APPDATA || "", "npm", "vercel.cmd");
-const VERCEL = fs.existsSync(VERCEL_CMD) ? `"${VERCEL_CMD}"` : "npx -y vercel";
+const os = require("os");
+const roamingDirs = [...new Set([process.env.APPDATA, path.join(os.homedir(), "AppData", "Roaming")].filter(Boolean))];
+const find = (sub) => roamingDirs.map((d) => path.join(d, sub)).find((p) => fs.existsSync(p));
+const VERCEL_CMD = find(path.join("npm", "vercel.cmd"));
+const VERCEL_CONFIG = find(path.join("com.vercel.cli", "Data", "auth.json"));
+const VERCEL = (VERCEL_CMD ? `"${VERCEL_CMD}"` : "npx -y vercel")
+  + (VERCEL_CONFIG ? ` --global-config "${path.dirname(VERCEL_CONFIG)}"` : "");
 
 // args are fixed strings from this file, never user input.
 const vercel = (args, input) =>
