@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מה הקשר?</title>
+<meta name="description" content="משחק הרביעיות שכבש את המדינה – כל החידות מכל הזמנים במקום אחד.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf8f3;
+    --surface: #ffffff;
+    --text: #1d1b16;
+    --muted: #6b675d;
+    --line: #e6e1d6;
+    --yellow: #f9df6d;
+    --green: #a0c35a;
+    --blue: #b0c4ef;
+    --purple: #ba81c5;
+    --accent: #1d1b16;
+    --on-accent: #ffffff;
+    --played: #e9e5da;
+    --tile: #efebe0;
+    --tile-sel: #5a594e;
+    --tile-sel-text: #ffffff;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15140f; --surface: #1f1d17; --text: #f2efe6; --muted: #a39e90; --line: #333027;
+      --accent: #f2efe6; --on-accent: #15140f; --played: #2a2820;
+      --tile: #2c2a22; --tile-sel: #f2efe6; --tile-sel-text: #15140f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15140f; --surface: #1f1d17; --text: #f2efe6; --muted: #a39e90; --line: #333027;
+    --accent: #f2efe6; --on-accent: #15140f; --played: #2a2820;
+    --tile: #2c2a22; --tile-sel: #f2efe6; --tile-sel-text: #15140f;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Rubik", system-ui, sans-serif; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  button { font: inherit; }
+  [hidden] { display: none !important; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  .lv0 { background: var(--yellow); } .lv1 { background: var(--green); }
+  .lv2 { background: var(--blue); }   .lv3 { background: var(--purple); }
+
+  /* Header */
+  header.top { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; }
+  .brand { font-weight: 700; font-size: 18px; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+  .mini-grid { display: grid; grid-template-columns: repeat(2, 10px); gap: 3px; }
+  .mini-grid i { width: 10px; height: 10px; border-radius: 3px; display: block; }
+  .icon-btn {
+    border: 1px solid var(--line); background: var(--surface); color: var(--text);
+    width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 18px;
+    display: grid; place-items: center;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 17px;
+    padding: 14px 24px; border-radius: 999px; border: 2px solid var(--accent); cursor: pointer; text-decoration: none;
+    transition: transform .12s ease, opacity .12s ease;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled { opacity: .35; cursor: default; transform: none; }
+  .btn.primary { background: var(--accent); color: var(--on-accent); }
+  .btn.ghost { background: transparent; color: var(--text); }
+  .btn.sm { font-size: 15px; padding: 10px 18px; }
+
+  /* Hero */
+  .hero { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: center; padding: 32px 0 56px; }
+  .hero h1 { font-size: clamp(48px, 9vw, 96px); font-weight: 900; line-height: 1; margin: 0 0 16px; letter-spacing: -1px; }
+  .hero p.lead { font-size: clamp(18px, 2.4vw, 22px); color: var(--muted); margin: 0 0 28px; max-width: 30ch; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .demo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .demo .tile {
+    aspect-ratio: 1.35; border-radius: 10px; display: grid; place-items: center;
+    font-weight: 700; font-size: clamp(13px, 1.8vw, 16px); background: var(--tile);
+  }
+  .demo .row { grid-column: 1 / -1; border-radius: 10px; padding: 14px; text-align: center; color: #1d1b16; }
+  .demo .row b { display: block; font-size: 15px; }
+  .demo .row span { font-size: 14px; }
+
+  /* Latest + stats */
+  .latest {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+    padding: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px;
+    margin-bottom: 48px;
+  }
+  .latest .label { font-size: 14px; color: var(--muted); font-weight: 500; }
+  .latest .title { font-size: 26px; font-weight: 700; }
+  .latest-main { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .stats { display: flex; gap: 28px; }
+  .stat b { display: block; font-size: 28px; font-weight: 900; line-height: 1.1; }
+  .stat span { font-size: 13px; color: var(--muted); }
+
+  /* Archive */
+  .archive-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+  .archive-head h2 { font-size: 32px; margin: 0; font-weight: 900; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-size: 14px; font-weight: 500; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  }
+  .chip[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .progress { height: 8px; background: var(--played); border-radius: 99px; overflow: hidden; margin-bottom: 32px; }
+  .progress > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--purple), var(--blue), var(--green), var(--yellow)); transition: width .4s ease; }
+  .month { margin-bottom: 36px; }
+  .month h3 { font-size: 18px; font-weight: 700; margin: 0 0 12px; display: flex; align-items: center; gap: 10px; }
+  .month h3 small { color: var(--muted); font-weight: 400; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .p {
+    position: relative; display: flex; flex-direction: column; text-decoration: none; border-radius: var(--radius);
+    padding: 14px 12px 12px; min-height: 96px; color: #1d1b16; transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .p:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+  .p:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+  .p .num { font-size: 22px; font-weight: 900; line-height: 1; }
+  .p .date { font-size: 13px; margin-top: 6px; opacity: .8; }
+  .p .extra { font-size: 12px; margin-top: auto; padding-top: 6px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .p.done { background: var(--played); color: var(--muted); }
+  .p .head { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  .p .badge {
+    font-size: 12px; font-weight: 700; line-height: 1; white-space: nowrap;
+    padding: 5px 8px; border-radius: 99px; background: rgba(0,0,0,.12);
+  }
+  .p.done .badge.won { background: var(--green); color: #1d1b16; }
+  .p.done .badge.lost { background: var(--line); }
+  .p .badge.new { background: #1d1b16; color: #fff; }
+  .intl {
+    display: inline-block; font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 7px; border-radius: 99px;
+    background: rgba(255,255,255,.65); color: #1d1b16; margin-inline-start: 6px; vertical-align: 1px; direction: ltr;
+  }
+  .game-head .intl { font-size: 13px; background: var(--blue); margin: 0; }
+  .empty { color: var(--muted); padding: 40px 0; text-align: center; }
+
+  /* About + footer */
+  .about { border-top: 1px solid var(--line); margin-top: 56px; padding: 48px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .about h2 { font-size: 26px; margin: 0 0 12px; }
+  .about p, .about li { color: var(--muted); }
+  .about ol { padding-inline-start: 20px; margin: 0; }
+  .about li { margin-bottom: 6px; }
+  footer { padding: 24px 0 40px; color: var(--muted); font-size: 14px; }
+
+  /* ---------- Game view ---------- */
+  .game { max-width: 620px; margin: 0 auto; padding-bottom: 48px; }
+  .game-nav { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 20px; font-size: 15px; }
+  .game-nav a { text-decoration: none; color: var(--muted); font-weight: 500; padding: 6px 0; }
+  .game-nav a:hover { color: var(--text); }
+  .game-nav .pn { display: flex; gap: 16px; }
+  .game-nav .off { visibility: hidden; }
+  .game-head { margin-bottom: 20px; }
+  .game-head h1 { font-size: 40px; font-weight: 900; margin: 0; line-height: 1.1; }
+  .game-head .meta { color: var(--muted); font-size: 16px; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  .game-head .meta b { color: var(--text); font-weight: 500; }
+  .hint { font-size: 15px; color: var(--muted); margin: 0 0 12px; }
+
+  .gboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .gtile {
+    min-height: 80px; border: 0; border-radius: 10px; background: var(--tile); color: var(--text);
+    font-weight: 700; font-size: 17px; line-height: 1.2; padding: 6px; cursor: pointer;
+    display: grid; place-items: center; text-align: center; overflow-wrap: anywhere;
+    transition: background .12s ease, color .12s ease, transform .1s ease; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .gtile.l2 { font-size: 15px; } .gtile.l3 { font-size: 13.5px; } .gtile.l4 { font-size: 12px; }
+  .gtile:active { transform: scale(.96); }
+  .gtile[aria-pressed="true"] { background: var(--tile-sel); color: var(--tile-sel-text); }
+  .gtile:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+  .gtile.hop { animation: hop .3s ease; }
+  .gtile.shake { animation: shake .4s ease; }
+  .grow {
+    grid-column: 1 / -1; min-height: 80px; border-radius: 10px; color: #1d1b16; text-align: center;
+    display: flex; flex-direction: column; justify-content: center; padding: 8px 12px;
+  }
+  .grow b { font-size: 17px; font-weight: 700; }
+  .grow span { font-size: 15px; }
+  .grow.enter { animation: reveal .35s ease; }
+  @keyframes hop { 50% { transform: translateY(-8px); } }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-6px); } 40%,80% { transform: translateX(6px); } }
+  @keyframes reveal { from { transform: scale(.92); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  .mistakes { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px 0; font-size: 15px; color: var(--muted); }
+  .mistakes b { color: var(--text); font-size: 17px; display: inline-block; }
+  .mistakes b.bump { animation: bump .35s ease; }
+  @keyframes bump { 50% { transform: scale(1.5); } }
+  .linkbtn { display: block; margin: 18px auto 0; background: none; border: 0; color: var(--muted); font-size: 14px; text-decoration: underline; cursor: pointer; }
+  .linkbtn:hover { color: var(--text); }
+  .gcontrols { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+
+  .endcard { text-align: center; margin-top: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 28px 20px; animation: reveal .35s ease; }
+  .endcard h2 { font-size: 30px; margin: 0; font-weight: 900; }
+  .endcard p { margin: 6px 0 18px; color: var(--muted); }
+  .emoji { display: inline-flex; flex-direction: column; gap: 4px; margin-bottom: 22px; direction: ltr; }
+  .emoji div { display: flex; gap: 4px; }
+  .emoji i { width: 22px; height: 22px; border-radius: 5px; display: block; }
+  .endcard .cta-row { justify-content: center; }
+  .source { text-align: center; margin-top: 28px; font-size: 13px; color: var(--muted); }
+
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translate(-50%, -20px); opacity: 0; pointer-events: none;
+    background: var(--accent); color: var(--on-accent); padding: 10px 18px; border-radius: 10px;
+    font-weight: 700; font-size: 15px; transition: opacity .2s ease, transform .2s ease; z-index: 10;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 760px) {
+    .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 12px; }
+    .about { grid-template-columns: 1fr; }
+    .stats { gap: 20px; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+    .p .num { font-size: 19px; }
+    .gboard { gap: 6px; }
+    .gtile { min-height: 68px; font-size: 15px; padding: 4px; }
+    .gtile.l2 { font-size: 13.5px; } .gtile.l3 { font-size: 12px; } .gtile.l4 { font-size: 11px; }
+    .grow { min-height: 68px; }
+    .grow b { font-size: 15px; } .grow span { font-size: 13.5px; }
+    .game-head h1 { font-size: 32px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#/">
+      <span class="mini-grid" aria-hidden="true">
+        <i class="lv0"></i><i class="lv1"></i><i class="lv2"></i><i class="lv3"></i>
+      </span>
+      מה הקשר?
+    </a>
+    <button class="icon-btn" id="themeBtn" aria-label="החלפת ערכת צבעים">◐</button>
+  </header>
+
+  <!-- ===== Home ===== -->
+  <main id="home">
+    <section class="hero">
+      <div>
+        <h1>מה הקשר?</h1>
+        <p class="lead">משחק הרביעיות שכבש את המדינה. 16 מילים, 4 קבוצות, בלי הגבלת ניסיונות. כל החידות מכל הזמנים, כאן.</p>
+        <div class="cta-row">
+          <a class="btn primary" id="playLatest">לחידה האחרונה ←</a>
+          <button class="btn ghost" id="randomBtn">🎲 חידה אקראית</button>
+        </div>
+      </div>
+      <div class="demo" aria-hidden="true">
+        <div class="row lv0"><b>צבעים</b><span>אדום, כחול, ירוק, צהוב</span></div>
+        <div class="tile">?</div><div class="tile">?</div><div class="tile">?</div><div class="tile">?</div>
+        <div class="tile">?</div><div class="tile">?</div><div class="tile">?</div><div class="tile">?</div>
+        <div class="tile">?</div><div class="tile">?</div><div class="tile">?</div><div class="tile">?</div>
+      </div>
+    </section>
+
+    <section class="latest">
+      <div class="latest-main">
+        <div>
+          <div class="label">החידה האחרונה</div>
+          <div class="title" id="latestTitle"></div>
+        </div>
+        <a class="btn primary sm" id="latestBtn"></a>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="statSolved">0</b><span>נפתרו</span></div>
+        <div class="stat"><b id="statRate">–</b><span>ממוצע טעויות</span></div>
+        <div class="stat"><b id="statPerfect">0</b><span>בלי טעויות</span></div>
+        <div class="stat"><b id="statLeft">0</b><span>נשארו</span></div>
+      </div>
+    </section>
+
+    <section id="archive">
+      <div class="archive-head">
+        <h2>כל החידות</h2>
+        <div class="controls" role="group" aria-label="סינון">
+          <button class="chip" data-filter="all" aria-pressed="true">הכל</button>
+          <button class="chip" data-filter="todo" aria-pressed="false">עוד לא פתרתי</button>
+          <button class="chip" data-filter="done" aria-pressed="false">סיימתי</button>
+          <button class="chip" data-filter="intl" aria-pressed="false" title="Puzzles playable without Hebrew">🌍 גם בלי עברית</button>
+        </div>
+      </div>
+      <div class="progress" aria-hidden="true"><div id="progressBar"></div></div>
+      <div id="months"></div>
+    </section>
+
+    <section class="about" id="about">
+      <div>
+        <h2>איך משחקים?</h2>
+        <ol>
+          <li>בכל חידה 16 מילים שמסתתרות בהן 4 קבוצות של 4.</li>
+          <li>בוחרים 4 מילים שיש ביניהן קשר ולוחצים "שליחה".</li>
+          <li>אין הגבלה על מספר הניסיונות, אבל כל טעות נספרת. נתקעתם? אפשר לחשוף את הפתרון.</li>
+          <li>הקבוצות מדורגות מצהוב (הכי קל) ועד סגול (הכי מתעתע).</li>
+        </ol>
+      </div>
+      <div>
+        <h2>על האתר</h2>
+        <p>חידות "מה הקשר?" בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== Game ===== -->
+  <main id="game" class="game" hidden>
+    <nav class="game-nav">
+      <a href="#/" id="backLink">→ כל החידות</a>
+      <div class="pn">
+        <a id="prevLink">→ הקודמת</a>
+        <a id="nextLink">הבאה ←</a>
+      </div>
+    </nav>
+    <div class="game-head">
+      <h1 id="gTitle"></h1>
+      <div class="meta" id="gMeta"></div>
+    </div>
+    <p class="hint" id="gHint">מצאו ארבע קבוצות של ארבע מילים שיש ביניהן קשר.</p>
+    <div class="gboard" id="gBoard"></div>
+    <div id="gPlay">
+      <div class="mistakes" id="gMistakes"></div>
+      <div class="gcontrols">
+        <button class="btn ghost sm" id="shuffleBtn">ערבוב</button>
+        <button class="btn ghost sm" id="clearBtn">ניקוי בחירה</button>
+        <button class="btn primary sm" id="submitBtn">שליחה</button>
+      </div>
+      <button class="linkbtn" id="giveUpBtn">נתקעתי, להראות את הפתרון</button>
+    </div>
+    <div id="gEnd"></div>
+    <div class="source"><a id="sourceLink" target="_blank" rel="noopener">לפתוח את החידה באתר המקורי</a></div>
+  </main>
+
+  <footer>© רועי פוסמניק · מה הקשר?</footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="puzzles.js"></script>
+<script src="games.js"></script>
+<script>
+(function () {
+  const BASE = "https://connections.swellgarfo.com/game/";
+  const MONTHS = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
+  const EMOJI = ["🟨", "🟩", "🟦", "🟪"];
+  const LEVEL_BY_COLOR = { "#fbd400": 0, "#69e352": 1, "#5492ff": 2, "#df7bea": 3 };
+  const OWNER = "רועי פוסמניק";
+  const AUTHOR_FIX = { "רועי פוסמנק": OWNER, "(רועי (בהשראת מיכל": "רועי (בהשראת מיכל)" };
+  const STATE_KEY = "mh-game-";
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // ---------- Data ----------
+  const list = [];
+  window.PUZZLES.ARCHIVE.forEach((id) => list.push({ id, date: null }));
+  window.PUZZLES.DATED.slice().reverse().forEach(([d, id]) => {
+    const [day, m, y] = d.split("/").map(Number);
+    list.push({ id, date: { day, m, y } });
+  });
+  list.forEach((p, i) => {
+    p.n = i + 1;
+    p.url = BASE + p.id;
+    const g = (window.GAMES || {})[p.id];
+    if (!g) return;
+    // Order groups by difficulty so tile index >> 2 == level.
+    p.groups = g.groups
+      .map((x, i) => ({ desc: x.d, words: x.w, level: LEVEL_BY_COLOR[(x.c || "").toLowerCase()] ?? i }))
+      .sort((a, b) => a.level - b.level);
+    p.words = p.groups.flatMap((x) => x.words);
+    let author = (AUTHOR_FIX[g.author] ?? g.author).trim();
+    if (/^\d+[\/.]\d+/.test(author)) author = OWNER; // date typed into the author field
+    p.author = author && author !== OWNER ? author : "";
+    const t = (g.title || "").trim();
+    const generic = !t || /^\d+[\/.]\d+/.test(t) || /^חידה( ל\S+)? #\d+$/.test(t);
+    p.title = generic ? "" : t;
+    // Playable without Hebrew: every word is English letters, acronyms or numbers.
+    p.intl = p.words.every((w) => !/[֐-׿]/.test(w));
+  });
+  const byN = (n) => list[n - 1];
+  const newest = list[list.length - 1];
+  const MONTHS_EN = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const fmt = (d) => `${MONTHS_EN[d.m - 1]} ${d.day}`;
+
+  // ---------- Storage ----------
+  const memory = {};
+  function loadState(p) {
+    if (memory[p.id]) return memory[p.id];
+    let s = null;
+    try { s = JSON.parse(localStorage.getItem(STATE_KEY + p.id)); } catch (e) {}
+    return (memory[p.id] = s || freshState(p));
+  }
+  function saveState(p, s) {
+    memory[p.id] = s;
+    try { localStorage.setItem(STATE_KEY + p.id, JSON.stringify(s)); } catch (e) {}
+  }
+  function freshState(p) {
+    return { order: seededShuffle([...Array(16).keys()], p.id), solved: [], guesses: [], mistakes: 0, status: "new" };
+  }
+  function seededShuffle(arr, seedStr) {
+    let h = 2166136261;
+    for (const c of seedStr) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+    const rand = () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
+    for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+    return arr;
+  }
+  const finished = (p) => ["won", "lost"].includes(loadState(p).status);
+
+  // ---------- Theme ----------
+  const root = document.documentElement;
+  try { const t = localStorage.getItem("theme"); if (t) root.dataset.theme = t; } catch (e) {}
+  $("#themeBtn").addEventListener("click", () => {
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+    try { localStorage.setItem("theme", root.dataset.theme); } catch (e) {}
+  });
+
+  // ---------- Toast ----------
+  let toastTimer;
+  function toast(msg) {
+    const t = $("#toast");
+    t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
+  }
+
+  // ---------- Routing ----------
+  let lastGameN = null;
+  function route() {
+    const m = location.hash.match(/^#\/p\/(\d+)/);
+    const p = m && byN(Number(m[1]));
+    if (p && p.groups) {
+      $("#home").hidden = true; $("#game").hidden = false;
+      openGame(p);
+      window.scrollTo(0, 0);
+    } else {
+      $("#game").hidden = true; $("#home").hidden = false;
+      renderHome();
+      if (lastGameN) {
+        const el = document.getElementById("t" + lastGameN);
+        if (el) el.scrollIntoView({ block: "center" });
+        lastGameN = null;
+      }
+    }
+  }
+  window.addEventListener("hashchange", route);
+  const go = (p) => { location.hash = "#/p/" + p.n; };
+
+  // ---------- Home ----------
+  let filter = "all";
+  $("#playLatest").href = "#/p/" + newest.n;
+  $("#randomBtn").addEventListener("click", () => {
+    const pool = list.filter((p) => p.groups && !finished(p));
+    const src = pool.length ? pool : list.filter((p) => p.groups);
+    go(src[Math.floor(Math.random() * src.length)]);
+  });
+  document.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => {
+    filter = c.dataset.filter;
+    document.querySelectorAll(".chip").forEach((x) => x.setAttribute("aria-pressed", String(x === c)));
+    renderHome();
+  }));
+
+  function groups() {
+    const out = [], byKey = new Map();
+    for (let i = list.length - 1; i >= 0; i--) {
+      const p = list[i];
+      const key = p.date ? `${p.date.y}-${p.date.m}` : "archive";
+      if (!byKey.has(key)) {
+        const g = { title: p.date ? `${MONTHS[p.date.m - 1]} ${p.date.y}` : "ארכיון · יוני–יולי 2025", items: [] };
+        byKey.set(key, g); out.push(g);
+      }
+      byKey.get(key).items.push(p);
+    }
+    return out;
+  }
+
+  function statusBadge(p, s) {
+    if (s.status === "won") return `<span class="badge won">✓ ${s.mistakes === 0 ? "מושלם" : "נפתר"}</span>`;
+    if (s.status === "lost") return `<span class="badge lost">פתרון</span>`;
+    if (s.status === "playing") return `<span class="badge">${s.solved.length}/4</span>`;
+    if (p === newest) return `<span class="badge new">חדש</span>`;
+    return "";
+  }
+
+  function renderHome() {
+    const states = list.map(loadState);
+    const won = states.filter((s) => s.status === "won").length;
+    const lost = states.filter((s) => s.status === "lost").length;
+    const perfect = states.filter((s) => s.status === "won" && s.mistakes === 0).length;
+    $("#statSolved").textContent = won;
+    const totalMistakes = states.filter((s) => s.status === "won").reduce((t, s) => t + s.mistakes, 0);
+    $("#statRate").textContent = won ? String(+(totalMistakes / won).toFixed(1)) : "–";
+    $("#statPerfect").textContent = perfect;
+    $("#statLeft").textContent = list.length - won - lost;
+    $("#progressBar").style.width = ((won + lost) / list.length * 100) + "%";
+
+    const ns = loadState(newest);
+    $("#latestTitle").textContent = `חידה #${newest.n} · ${fmt(newest.date)}`;
+    $("#latestBtn").href = "#/p/" + newest.n;
+    $("#latestBtn").textContent = ns.status === "won" || ns.status === "lost" ? "לראות שוב" : ns.status === "playing" ? "להמשיך ←" : "לשחק ←";
+
+    const container = $("#months");
+    container.innerHTML = "";
+    let shown = 0;
+    for (const g of groups()) {
+      const items = g.items.filter((p) =>
+        filter === "all" || (filter === "intl" ? p.intl : (filter === "done") === finished(p)));
+      if (!items.length) continue;
+      shown += items.length;
+      const sec = document.createElement("div");
+      sec.className = "month";
+      sec.innerHTML = `<h3>${g.title} <small>${items.length} חידות</small></h3><div class="grid"></div>`;
+      const grid = sec.querySelector(".grid");
+      for (const p of items) {
+        const s = loadState(p);
+        const a = document.createElement("a");
+        a.id = "t" + p.n;
+        a.className = `p lv${p.n % 4}` + (finished(p) ? " done" : "");
+        a.href = p.groups ? "#/p/" + p.n : p.url;
+        if (!p.groups) { a.target = "_blank"; a.rel = "noopener"; }
+        const extra = p.title || (p.author ? "מאת " + p.author : "");
+        const intl = p.intl ? `<span class="intl" title="Playable without Hebrew">🌍 EN</span>` : "";
+        a.innerHTML = `<div class="head"><div class="num">#${p.n}</div>${statusBadge(p, s)}</div><div class="date">${p.date ? fmt(p.date) : "ארכיון"}${intl}</div>
+          ${extra ? `<div class="extra" title="${esc(extra)}">${esc(extra)}</div>` : ""}`;
+        grid.appendChild(a);
+      }
+      container.appendChild(sec);
+    }
+    if (!shown) container.innerHTML = `<div class="empty">${filter === "todo" ? "פתרת הכל! 🎉 חכו לחידה הבאה." : "עוד לא סיימת אף חידה."}</div>`;
+  }
+
+  // ---------- Game ----------
+  let cur = null; // { p, s, sel:Set, busy, revealed }
+
+  function openGame(p) {
+    lastGameN = p.n;
+    cur = { p, s: loadState(p), sel: new Set(), busy: false, revealed: null, animate: -1 };
+    $("#gTitle").textContent = `חידה #${p.n}`;
+    const meta = [];
+    if (p.date) meta.push(fmt(p.date));
+    if (p.title) meta.push(`<b>${esc(p.title)}</b>`);
+    if (p.author) meta.push(`מאת <b>${esc(p.author)}</b>`);
+    if (p.intl) meta.push(`<span class="intl">🌍 Playable without Hebrew</span>`);
+    $("#gMeta").innerHTML = meta.join(" · ");
+    const prev = byN(p.n - 1), next = byN(p.n + 1);
+    $("#prevLink").className = prev ? "" : "off"; if (prev) $("#prevLink").href = "#/p/" + prev.n;
+    $("#nextLink").className = next ? "" : "off"; if (next) $("#nextLink").href = "#/p/" + next.n;
+    // Puzzles made in the studio live only here; swellgarfo ones link back to the original.
+    $("#sourceLink").hidden = !p.id.startsWith("-");
+    $("#sourceLink").href = p.url;
+    drawGame();
+  }
+
+  function sizeClass(w) {
+    const len = w.length, longest = Math.max(...w.split(" ").map((x) => x.length));
+    if (len > 16 || longest > 10) return "l4";
+    if (len > 12 || longest > 8) return "l3";
+    if (len > 7) return "l2";
+    return "";
+  }
+
+  function rowsToShow() {
+    const { s } = cur;
+    if (s.status !== "lost") return s.solved;
+    const rest = [0, 1, 2, 3].filter((l) => !s.solved.includes(l));
+    const all = s.solved.concat(rest);
+    return cur.revealed == null ? all : all.slice(0, cur.revealed);
+  }
+
+  function drawGame() {
+    const { p, s, sel } = cur;
+    const board = $("#gBoard");
+    board.innerHTML = "";
+    const rows = rowsToShow();
+    rows.forEach((lvl, i) => {
+      const g = p.groups[lvl];
+      const r = document.createElement("div");
+      r.className = `grow lv${lvl}` + (i === cur.animate ? " enter" : "");
+      r.innerHTML = `<b>${esc(g.desc)}</b><span>${g.words.map(esc).join(", ")}</span>`;
+      board.appendChild(r);
+    });
+    cur.animate = -1;
+    if (rows.length < 4) {
+      for (const idx of s.order) {
+        if (rows.includes(idx >> 2)) continue;
+        const w = p.words[idx];
+        const b = document.createElement("button");
+        b.className = "gtile " + sizeClass(w);
+        b.dataset.idx = idx;
+        b.textContent = w;
+        b.setAttribute("aria-pressed", String(sel.has(idx)));
+        b.disabled = s.status === "won" || s.status === "lost";
+        b.addEventListener("click", () => toggle(idx, b));
+        board.appendChild(b);
+      }
+    }
+    const over = s.status === "won" || s.status === "lost";
+    $("#gPlay").hidden = over;
+    $("#gHint").hidden = over || s.guesses.length > 0;
+    $("#gMistakes").innerHTML = `טעויות: <b>${s.mistakes}</b>`;
+    $("#submitBtn").disabled = sel.size !== 4 || cur.busy;
+    $("#clearBtn").disabled = sel.size === 0 || cur.busy;
+    $("#gEnd").innerHTML = over && (cur.revealed == null || cur.revealed >= 4) ? endCard() : "";
+    if ($("#gEnd").innerHTML) wireEndCard();
+  }
+
+  function toggle(idx, btn) {
+    if (cur.busy) return;
+    const { sel } = cur;
+    if (sel.has(idx)) sel.delete(idx);
+    else if (sel.size < 4) sel.add(idx);
+    else return;
+    btn.setAttribute("aria-pressed", String(sel.has(idx)));
+    $("#submitBtn").disabled = sel.size !== 4;
+    $("#clearBtn").disabled = sel.size === 0;
+  }
+
+  $("#shuffleBtn").addEventListener("click", () => {
+    if (cur.busy) return;
+    const { s } = cur;
+    const rows = rowsToShow();
+    const free = s.order.filter((i) => !rows.includes(i >> 2));
+    for (let i = free.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [free[i], free[j]] = [free[j], free[i]]; }
+    s.order = s.order.filter((i) => rows.includes(i >> 2)).concat(free);
+    saveState(cur.p, s);
+    drawGame();
+  });
+  $("#clearBtn").addEventListener("click", () => { cur.sel.clear(); drawGame(); });
+  $("#submitBtn").addEventListener("click", submit);
+
+  const tileEls = () => [...cur.sel].map((i) => document.querySelector(`.gtile[data-idx="${i}"]`)).filter(Boolean);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  async function submit() {
+    const { p, s, sel } = cur;
+    if (cur.busy || sel.size !== 4) return;
+    const idx = [...sel].sort((a, b) => a - b);
+    const key = idx.join(",");
+    if (s.guesses.some((g) => g.key === key)) { toast("כבר ניסית את השילוב הזה"); return; }
+    const levels = idx.map((i) => i >> 2);
+    s.guesses.push({ key, levels });
+    s.status = "playing";
+    const counts = [0, 0, 0, 0];
+    levels.forEach((l) => counts[l]++);
+    // Correct group: reveal immediately, no delay.
+    if (counts.includes(4)) {
+      s.solved.push(levels[0]);
+      if (s.solved.length === 4) s.status = "won";
+      saveState(p, s);
+      sel.clear();
+      cur.animate = s.solved.length - 1;
+      drawGame();
+      return;
+    }
+
+    cur.busy = true;
+    $("#submitBtn").disabled = true;
+
+    // Hop the selected tiles in board order.
+    const els = tileEls().sort((a, b) => [...a.parentNode.children].indexOf(a) - [...b.parentNode.children].indexOf(b));
+    els.forEach((el, i) => setTimeout(() => el.classList.add("hop"), i * 90));
+    await wait(els.length * 90 + 250);
+
+    s.mistakes++;
+    const oneAway = counts.includes(3);
+    tileEls().forEach((el) => { el.classList.remove("hop"); el.classList.add("shake"); });
+    toast(oneAway ? "כמעט! חסרה אחת" : "לא בדיוק…");
+    saveState(p, s);
+    const counter = $("#gMistakes b");
+    counter.textContent = s.mistakes;
+    counter.classList.add("bump");
+    await wait(450);
+    tileEls().forEach((el) => el.classList.remove("shake"));
+    cur.busy = false;
+    drawGame();
+  }
+
+  $("#giveUpBtn").addEventListener("click", giveUp);
+  async function giveUp() {
+    const { p, s, sel } = cur;
+    if (cur.busy || !confirm("לחשוף את הפתרון? החידה תסומן כלא פתורה.")) return;
+    cur.busy = true;
+    s.status = "lost";
+    saveState(p, s);
+    sel.clear();
+    cur.revealed = s.solved.length;
+    drawGame();
+    while (cur.revealed < 4) {
+      await wait(600);
+      cur.revealed++;
+      cur.animate = cur.revealed - 1;
+      drawGame();
+    }
+    cur.revealed = null;
+    cur.busy = false;
+    drawGame();
+  }
+
+  function shareText() {
+    const { p, s } = cur;
+    const grid = s.guesses.map((g) => g.levels.map((l) => EMOJI[l]).join("")).join("\n");
+    return `מה הקשר? #${p.n}\n${grid}`;
+  }
+
+  function nextToPlay() {
+    for (let i = list.length - 1; i >= 0; i--) {
+      const q = list[i];
+      if (q !== cur.p && q.groups && !finished(q)) return q;
+    }
+    return null;
+  }
+
+  function endCard() {
+    const { s } = cur;
+    const won = s.status === "won";
+    const sub = won
+      ? (s.mistakes === 0 ? "בלי אף טעות. מושלם!" : s.mistakes === 1 ? "עם טעות אחת בלבד." : `עם ${s.mistakes} טעויות.`)
+      : "לא נורא, החידה הבאה שלך.";
+    const next = nextToPlay();
+    const grid = s.guesses.map((g) => `<div>${g.levels.map((l) => `<i class="lv${l}"></i>`).join("")}</div>`).join("");
+    return `<div class="endcard">
+      <h2>${won ? "כל הכבוד! 🎉" : "זה הפתרון"}</h2>
+      <p>${sub}</p>
+      <div class="emoji">${grid}</div>
+      <div class="cta-row">
+        ${next ? `<a class="btn primary sm" href="#/p/${next.n}">לחידה הבאה ←</a>` : `<a class="btn primary sm" href="#/">לכל החידות</a>`}
+        <button class="btn ghost sm" id="shareBtn">שיתוף התוצאה</button>
+        <button class="btn ghost sm" id="replayBtn">לשחק שוב</button>
+      </div>
+    </div>`;
+  }
+
+  function wireEndCard() {
+    $("#shareBtn").addEventListener("click", async () => {
+      const text = shareText();
+      try {
+        if (navigator.share) { await navigator.share({ text }); return; }
+        await navigator.clipboard.writeText(text);
+        toast("התוצאה הועתקה");
+      } catch (e) {}
+    });
+    $("#replayBtn").addEventListener("click", () => {
+      const s = freshState(cur.p);
+      saveState(cur.p, s);
+      cur.s = s; cur.sel.clear(); cur.revealed = null;
+      drawGame();
+    });
+  }
+
+  route();
+})();
+</script>
+</body>
+</html>

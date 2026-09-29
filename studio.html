@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>סטודיו לחידות</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf8f3; --surface: #ffffff; --text: #1d1b16; --muted: #6b675d; --line: #e6e1d6;
+    --yellow: #f9df6d; --green: #a0c35a; --blue: #b0c4ef; --purple: #ba81c5;
+    --accent: #1d1b16; --on-accent: #ffffff; --tile: #efebe0; --error: #b3261e; --ok: #2e7d32;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15140f; --surface: #1f1d17; --text: #f2efe6; --muted: #a39e90; --line: #333027;
+      --accent: #f2efe6; --on-accent: #15140f; --tile: #2c2a22; --error: #f2b8b5; --ok: #a5d6a7;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: "Rubik", system-ui, sans-serif; line-height: 1.5; }
+  button, input { font: inherit; color: inherit; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px 64px; }
+  header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
+  header h1 { margin: 0; font-size: 26px; font-weight: 900; }
+  header a { color: var(--muted); font-weight: 500; text-decoration: none; }
+  header a:hover { color: var(--text); }
+  .sub { color: var(--muted); margin: -8px 0 24px; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab { padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 500; }
+  .tab[aria-selected="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 20px; margin-bottom: 16px; }
+  label { display: block; font-size: 14px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+  input[type=text], input[type=date], input[type=url] {
+    width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-size: 16px;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .group { border-radius: 16px; padding: 16px; margin-bottom: 12px; color: #1d1b16; }
+  .group .gh { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .group .gh b { font-size: 15px; }
+  .group .gh span { font-size: 13px; opacity: .75; }
+  .group input { background: rgba(255,255,255,.75); border-color: rgba(0,0,0,.08); color: #1d1b16; }
+  .group .desc { margin-bottom: 8px; font-weight: 700; }
+  .group .words { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .lv0 { background: var(--yellow); } .lv1 { background: var(--green); } .lv2 { background: var(--blue); } .lv3 { background: var(--purple); }
+
+  .preview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .preview div {
+    min-height: 58px; border-radius: 8px; background: var(--tile); display: grid; place-items: center;
+    text-align: center; font-weight: 700; font-size: 14px; padding: 4px; overflow-wrap: anywhere;
+  }
+  .preview div.empty { color: var(--muted); font-weight: 400; }
+  .preview-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .preview-head b { font-size: 16px; }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 8px; }
+  .btn { padding: 13px 24px; border-radius: 999px; border: 2px solid var(--accent); font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
+  .btn.primary { background: var(--accent); color: var(--on-accent); }
+  .btn.ghost { background: transparent; }
+  .btn.sm { padding: 7px 14px; font-size: 14px; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .msg { font-weight: 500; }
+  .msg.error { color: var(--error); }
+  .msg.ok { color: var(--ok); }
+  .problems { margin: 0; padding-inline-start: 18px; color: var(--muted); font-size: 14px; }
+  .success { text-align: center; padding: 32px 20px; }
+  .success h2 { font-size: 28px; margin: 0 0 8px; }
+  .success .actions { justify-content: center; }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 600px) {
+    .row3 { grid-template-columns: 1fr; }
+    .group .words { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>סטודיו לחידות</h1>
+    <a href="/site/index.html" target="_blank">לאתר ←</a>
+  </header>
+  <p class="sub" id="sub">&nbsp;</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-tab="create">✏️ חידה חדשה</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="link">🔗 מקישור swellgarfo</button>
+  </div>
+
+  <!-- ===== Create ===== -->
+  <section id="tab-create">
+    <div class="card">
+      <div class="row3">
+        <div><label for="date">תאריך פרסום</label><input type="date" id="date"></div>
+        <div><label for="title">כותרת (לא חובה)</label><input type="text" id="title" placeholder="למשל: לפסח"></div>
+        <div><label for="author">מחבר/ת (לא חובה)</label><input type="text" id="author" placeholder="ריק = רועי פוסמניק"></div>
+      </div>
+    </div>
+
+    <div id="groups"></div>
+
+    <div class="card">
+      <div class="preview-head"><b>ככה זה ייראה</b><button class="btn ghost sm" id="reshuffle" type="button">ערבוב</button></div>
+      <div class="preview" id="preview"></div>
+    </div>
+
+    <ul class="problems" id="problems"></ul>
+    <div class="actions">
+      <button class="btn primary" id="save">שמירה והוספה לאתר</button>
+      <button class="btn ghost" id="clear" type="button">ניקוי הטופס</button>
+      <span class="msg" id="msg"></span>
+    </div>
+  </section>
+
+  <!-- ===== From link ===== -->
+  <section id="tab-link" hidden>
+    <div class="card">
+      <label for="link">קישור לחידה</label>
+      <input type="url" id="link" dir="ltr" placeholder="https://connections.swellgarfo.com/game/...">
+      <div style="height:12px"></div>
+      <label for="linkDate">תאריך פרסום</label>
+      <input type="date" id="linkDate" style="max-width:220px">
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="saveLink">הוספה לאתר</button>
+      <span class="msg" id="linkMsg"></span>
+    </div>
+  </section>
+
+  <!-- ===== Success ===== -->
+  <section id="done" class="card success" hidden>
+    <h2>🎉 <span id="doneTitle"></span></h2>
+    <p class="sub" style="margin:0 0 20px">החידה נשמרה באתר.</p>
+    <div class="actions">
+      <a class="btn primary" id="playLink" target="_blank">לשחק בה באתר</a>
+      <button class="btn ghost" id="another">להוסיף עוד חידה</button>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  const $ = (s) => document.querySelector(s);
+  const LEVELS = [["צהוב", "הכי קל"], ["ירוק", ""], ["כחול", ""], ["סגול", "הכי מתעתע"]];
+  const DRAFT_KEY = "studio-draft";
+
+  // ---------- Build group inputs ----------
+  $("#groups").innerHTML = LEVELS.map(([name, hint], i) => `
+    <div class="group lv${i}">
+      <div class="gh"><b>קבוצה ${i + 1} · ${name}</b><span>${hint}</span></div>
+      <input type="text" class="desc" data-g="${i}" placeholder="מה הקשר? (יופיע אחרי שפותרים)">
+      <div class="words">${[0, 1, 2, 3].map((j) => `<input type="text" class="word" data-g="${i}" data-w="${j}" placeholder="מילה ${j + 1}">`).join("")}</div>
+    </div>`).join("");
+
+  const toInputDate = (s) => { const [d, m, y] = s.split("/"); return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`; };
+  const fromInputDate = (s) => { const [y, m, d] = s.split("-").map(Number); return `${d}/${m}/${y}`; };
+
+  function readForm() {
+    return {
+      date: $("#date").value ? fromInputDate($("#date").value) : "",
+      title: $("#title").value.trim(),
+      author: $("#author").value.trim(),
+      groups: [0, 1, 2, 3].map((i) => ({
+        d: document.querySelector(`.desc[data-g="${i}"]`).value.trim(),
+        w: [0, 1, 2, 3].map((j) => document.querySelector(`.word[data-g="${i}"][data-w="${j}"]`).value.trim()),
+      })),
+    };
+  }
+
+  function problems(f) {
+    const out = [];
+    if (!f.date) out.push("חסר תאריך");
+    const empty = f.groups.every((g) => !g.d && g.w.every((w) => !w));
+    if (empty) { out.push("מלאו את 4 הקבוצות: תיאור הקשר ו-4 מילים לכל אחת"); return out; }
+    f.groups.forEach((g, i) => {
+      const missing = g.w.filter((w) => !w).length;
+      const parts = [];
+      if (!g.d) parts.push("תיאור הקשר");
+      if (missing) parts.push(missing === 1 ? "מילה אחת" : `${missing} מילים`);
+      if (parts.length) out.push(`קבוצה ${i + 1}: חסר ${parts.join(" ו-")}`);
+    });
+    const words = f.groups.flatMap((g) => g.w).filter(Boolean).map((w) => w.toLowerCase());
+    const dups = [...new Set(words.filter((w, i) => words.indexOf(w) !== i))];
+    dups.forEach((w) => out.push(`המילה "${w}" מופיעה פעמיים`));
+    return out;
+  }
+
+  let order = shuffle([...Array(16).keys()]);
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+  function refresh() {
+    const f = readForm();
+    const words = f.groups.flatMap((g) => g.w);
+    $("#preview").innerHTML = order.map((i) => words[i] ? `<div>${esc(words[i])}</div>` : `<div class="empty">·</div>`).join("");
+    const p = problems(f);
+    $("#problems").innerHTML = p.map((x) => `<li>${esc(x)}</li>`).join("");
+    $("#save").disabled = p.length > 0;
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(f)); } catch (e) {}
+  }
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function fillForm(f) {
+    if (f.date) $("#date").value = toInputDate(f.date);
+    $("#title").value = f.title || "";
+    $("#author").value = f.author || "";
+    (f.groups || []).forEach((g, i) => {
+      document.querySelector(`.desc[data-g="${i}"]`).value = g.d || "";
+      (g.w || []).forEach((w, j) => { document.querySelector(`.word[data-g="${i}"][data-w="${j}"]`).value = w || ""; });
+    });
+  }
+
+  document.querySelector("#tab-create").addEventListener("input", refresh);
+  $("#reshuffle").addEventListener("click", () => { order = shuffle(order); refresh(); });
+  $("#clear").addEventListener("click", () => {
+    if (!confirm("לנקות את כל הטופס?")) return;
+    document.querySelectorAll("#tab-create input[type=text]").forEach((i) => (i.value = ""));
+    refresh();
+  });
+
+  // ---------- Tabs ----------
+  document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach((x) => x.setAttribute("aria-selected", String(x === t)));
+    $("#tab-create").hidden = t.dataset.tab !== "create";
+    $("#tab-link").hidden = t.dataset.tab !== "link";
+    $("#done").hidden = true;
+  }));
+
+  // ---------- Server calls ----------
+  async function post(url, body) {
+    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    return r.json();
+  }
+  const HEB_ERR = {
+    "already on the site": "החידה הזאת כבר נמצאת באתר",
+    "this puzzle is already on the site": "החידה הזאת כבר נמצאת באתר",
+    "that doesn't look like a swellgarfo link": "זה לא נראה כמו קישור של swellgarfo",
+    "puzzle not found on swellgarfo": "לא הצלחתי לטעון את החידה מ-swellgarfo",
+    "date is older than every dated puzzle on the site": "התאריך מוקדם מכל החידות באתר",
+    "date must be D/M/YYYY": "תאריך לא תקין",
+  };
+  const errText = (e) => HEB_ERR[e] || e;
+
+  function showDone(n) {
+    $("#tab-create").hidden = true; $("#tab-link").hidden = true; $("#done").hidden = false;
+    $("#doneTitle").textContent = `נוספה חידה #${n}`;
+    $("#playLink").href = `/site/index.html#/p/${n}`;
+    loadInfo();
+  }
+  $("#another").addEventListener("click", () => document.querySelector('.tab[aria-selected="true"]').click());
+
+  $("#save").addEventListener("click", async () => {
+    const f = readForm();
+    if (problems(f).length) return;
+    $("#save").disabled = true; $("#msg").className = "msg"; $("#msg").textContent = "שומר…";
+    try {
+      const r = await post("/api/create", f);
+      if (!r.ok) throw new Error(errText(r.error));
+      $("#msg").textContent = "";
+      document.querySelectorAll("#tab-create input[type=text]").forEach((i) => (i.value = ""));
+      try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+      order = shuffle(order); refresh();
+      showDone(r.n);
+    } catch (e) {
+      $("#msg").className = "msg error"; $("#msg").textContent = e.message.includes("fetch") ? "הסטודיו לא פועל. הפעילו שוב את puzzle-studio.cmd" : e.message;
+      $("#save").disabled = false;
+    }
+  });
+
+  $("#saveLink").addEventListener("click", async () => {
+    const link = $("#link").value.trim(), date = $("#linkDate").value;
+    if (!link || !date) { $("#linkMsg").className = "msg error"; $("#linkMsg").textContent = "צריך קישור ותאריך"; return; }
+    $("#saveLink").disabled = true; $("#linkMsg").className = "msg"; $("#linkMsg").textContent = "טוען את החידה…";
+    try {
+      const r = await post("/api/link", { link, date: fromInputDate(date) });
+      if (!r.ok) throw new Error(errText(r.error));
+      $("#linkMsg").textContent = ""; $("#link").value = "";
+      showDone(r.n);
+    } catch (e) {
+      $("#linkMsg").className = "msg error"; $("#linkMsg").textContent = e.message.includes("fetch") ? "הסטודיו לא פועל. הפעילו שוב את puzzle-studio.cmd" : e.message;
+    }
+    $("#saveLink").disabled = false;
+  });
+
+  async function loadInfo() {
+    try {
+      const i = await (await fetch("/api/info")).json();
+      $("#sub").textContent = `כרגע יש באתר ${i.total} חידות. האחרונה פורסמה ב-${i.latest[0]}.`;
+      return i;
+    } catch (e) { return null; }
+  }
+
+  // ---------- Init ----------
+  (async () => {
+    const i = await loadInfo();
+    const todayStr = i ? i.today : `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch (e) {}
+    if (draft) fillForm(draft);
+    if (!$("#date").value) $("#date").value = toInputDate(todayStr);
+    $("#linkDate").value = toInputDate(todayStr);
+    refresh();
+  })();
+})();
+</script>
+</body>
+</html>
