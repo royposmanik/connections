@@ -241,6 +241,7 @@
       4x4
     </a>
     <div class="header-actions">
+      <a class="icon-btn" id="studioLink" href="/studio" hidden data-i18n-aria="studioAria" aria-label="לסטודיו" style="text-decoration:none">✏️</a>
       <button class="icon-btn lang-btn" id="langBtn" data-i18n="langBtn" data-i18n-aria="langAria">EN</button>
       <button class="icon-btn" id="themeBtn" data-i18n-aria="themeAria" aria-label="החלפת ערכת צבעים">◐</button>
     </div>
@@ -361,7 +362,7 @@
   // Site text only; the puzzles themselves stay in Hebrew.
   const I18N = {
     he: {
-      langBtn: "EN", langAria: "Switch to English", themeAria: "החלפת ערכת צבעים",
+      langBtn: "EN", langAria: "Switch to English", themeAria: "החלפת ערכת צבעים", studioAria: "לסטודיו",
       desc: "משחק הרביעיות שכבש את העולם – כל החידות מכל הזמנים במקום אחד.",
       lead: "משחק הרביעיות שכבש את העולם. 16 מילים, 4 קבוצות, בלי הגבלת ניסיונות. כל החידות מכל הזמנים, כאן.",
       playLatest: "לחידה האחרונה ←", random: "🎲 חידה אקראית",
@@ -392,7 +393,7 @@
       months: ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"],
     },
     en: {
-      langBtn: "עב", langAria: "לעברית", themeAria: "Toggle color theme",
+      langBtn: "עב", langAria: "לעברית", themeAria: "Toggle color theme", studioAria: "Open the studio",
       desc: "The word-grouping game that took over the world – every puzzle ever, in one place.",
       lead: "The word-grouping game that took over the world. 16 words, 4 groups, unlimited tries. Every puzzle ever, right here.",
       playLatest: "Latest puzzle →", random: "🎲 Random puzzle",
@@ -441,6 +442,13 @@
     document.querySelector('meta[name="description"]').content = t("desc");
   }
   applyLang();
+
+  // Studio button: shown only in a browser that is logged in to the studio (Vercel only; 404s elsewhere).
+  fetch("/api/session", { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((s) => { if (s && s.authed) $("#studioLink").hidden = false; })
+    .catch(() => {});
+
   $("#langBtn").addEventListener("click", () => {
     lang = lang === "he" ? "en" : "he";
     try { localStorage.setItem("lang", lang); } catch (e) {}
