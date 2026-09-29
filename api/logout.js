@@ -1,4 +1,4 @@
-const { clearCookie } = require("../lib/auth");
+const { clearCookie } = require("./_lib/auth");
 
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");

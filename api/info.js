@@ -1,6 +1,6 @@
-const core = require("../lib/puzzle-core");
-const { readFiles } = require("../lib/github");
-const { protect } = require("../lib/auth");
+const core = require("./_lib/puzzle-core");
+const { readFiles } = require("./_lib/github");
+const { protect } = require("./_lib/auth");
 
 // Current puzzle count/latest, read from GitHub (the deployed copy can lag by a few seconds).
 module.exports = protect(async (req, res) => {

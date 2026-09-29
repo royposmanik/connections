@@ -1,1 +1,1 @@
-module.exports = require("../lib/add-online")("link");
+module.exports = require("./_lib/add-online")("link");

@@ -4,7 +4,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { exec, execFileSync } = require("child_process");
-const core = require("./lib/puzzle-core");
+const core = require("./api/_lib/puzzle-core");
 
 const PORT = Number(process.env.PORT) || 5178;
 const dir = __dirname;

@@ -1,4 +1,4 @@
-const { isAuthed } = require("../lib/auth");
+const { isAuthed } = require("./_lib/auth");
 
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
