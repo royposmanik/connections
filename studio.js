@@ -6,7 +6,7 @@ const path = require("path");
 const { exec, execFileSync } = require("child_process");
 const T = require("./puzzle-tools");
 
-const PORT = 5178;
+const PORT = Number(process.env.PORT) || 5178;
 const dir = __dirname;
 const SITE_FILES = { "index.html": "text/html", "puzzles.js": "text/javascript", "games.js": "text/javascript" };
 
@@ -46,7 +46,7 @@ async function handleApi(req, res, route) {
     games[id] = game;
     T.writeGames(games);
     console.log(`Added puzzle #${n} (${body.date})`);
-    send(res, 200, { ok: true, n, id, groups: game.groups });
+    send(res, 200, { ok: true, n, id, title: game.title, groups: game.groups });
   } catch (e) {
     send(res, 400, { ok: false, error: e.message });
   }

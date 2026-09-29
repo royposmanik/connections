@@ -62,7 +62,7 @@
   .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 8px; }
   .btn { padding: 13px 24px; border-radius: 999px; border: 2px solid var(--accent); font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
   .btn.primary { background: var(--accent); color: var(--on-accent); }
-  .btn.ghost { background: transparent; }
+  .btn.ghost { background: transparent; color: var(--text); }
   .btn.sm { padding: 7px 14px; font-size: 14px; }
   .btn:disabled { opacity: .4; cursor: default; }
   .msg { font-weight: 500; }
@@ -73,6 +73,11 @@
   .success h2 { font-size: 28px; margin: 0 0 8px; }
   .success .actions { justify-content: center; }
   [hidden] { display: none !important; }
+  textarea {
+    width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg);
+    font: inherit; font-size: 16px; color: inherit; resize: vertical; margin-bottom: 14px;
+  }
+  .btn.wa { background: #25d366; border-color: #25d366; color: #0b3d1f; }
   .publish {
     display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: -8px 0 24px;
     padding: 12px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); font-size: 15px;
@@ -150,10 +155,16 @@
   <!-- ===== Success ===== -->
   <section id="done" class="card success" hidden>
     <h2>🎉 <span id="doneTitle"></span></h2>
-    <p class="sub" style="margin:0 0 20px">החידה נשמרה באתר.</p>
+    <p class="sub" style="margin:0 0 20px">החידה נשמרה. עכשיו מפרסמים ושולחים לקבוצה:</p>
+    <label for="waText" style="text-align:start">ההודעה לוואטסאפ (אפשר לערוך)</label>
+    <textarea id="waText" rows="4"></textarea>
     <div class="actions">
-      <a class="btn primary" id="playLink" target="_blank">לשחק בה באתר</a>
-      <button class="btn ghost" id="another">להוסיף עוד חידה</button>
+      <button class="btn primary wa" id="waBtn">🚀 פרסום + 📲 שליחה בוואטסאפ</button>
+      <span class="msg" id="waMsg"></span>
+    </div>
+    <div class="actions" style="margin-top:14px">
+      <a class="btn ghost sm" id="playLink" target="_blank">לשחק בה</a>
+      <button class="btn ghost sm" id="another">להוסיף עוד חידה</button>
     </div>
   </section>
 </div>
@@ -260,13 +271,45 @@
   };
   const errText = (e) => HEB_ERR[e] || e;
 
-  function showDone(n) {
+  let liveUrl = "https://connections-roy.vercel.app/";
+  // Swellgarfo titles are often just a date or "חידה #5"; only real titles go into the message.
+  const isRealTitle = (t) => t && !/^\d+[\/.]\d+/.test(t) && !/^חידה( ל\S+)? #\d+$/.test(t);
+
+  function showDone(n, title) {
     $("#tab-create").hidden = true; $("#tab-link").hidden = true; $("#done").hidden = false;
     $("#doneTitle").textContent = `נוספה חידה #${n}`;
     $("#playLink").href = `/site/index.html#/p/${n}`;
+    // Keep a Hebrew word first on each line so WhatsApp lays the line out right-to-left.
+    const line2 = `חידה #${n}` + (isRealTitle(title) ? ` · ${title}` : "");
+    $("#waText").value = ["🧩 חידה חדשה ב-4x4", line2, `${liveUrl}#/p/${n}`].join("\n");
+    $("#waMsg").textContent = "";
     loadInfo();
     loadStatus();
   }
+
+  // Publish (if needed), then open WhatsApp with the message ready; Roy picks the group and hits send.
+  $("#waBtn").addEventListener("click", async () => {
+    const text = $("#waText").value.trim();
+    const win = window.open("", "_blank"); // open now, while we still have the click (avoids popup blocking)
+    $("#waBtn").disabled = true; $("#waMsg").className = "msg"; $("#waMsg").textContent = "מפרסם…";
+    try {
+      const s = await (await fetch("/api/status")).json();
+      if (!s.ok) throw new Error("לא ניתן לפרסם מהתיקייה הזאת");
+      if (s.pending) {
+        const r = await post("/api/publish", {});
+        if (!r.ok) throw new Error("הפרסום נכשל: " + r.error);
+      }
+      $("#waMsg").className = "msg ok";
+      $("#waMsg").textContent = "✓ פורסם. בחרו את הקבוצה בוואטסאפ ולחצו שלח.";
+      const wa = "https://wa.me/?text=" + encodeURIComponent(text);
+      if (win) win.location = wa; else location.href = wa;
+      loadStatus();
+    } catch (e) {
+      if (win) win.close();
+      $("#waMsg").className = "msg error"; $("#waMsg").textContent = e.message;
+    }
+    $("#waBtn").disabled = false;
+  });
   $("#another").addEventListener("click", () => document.querySelector('.tab[aria-selected="true"]').click());
 
   $("#save").addEventListener("click", async () => {
@@ -280,7 +323,7 @@
       document.querySelectorAll("#tab-create input[type=text]").forEach((i) => (i.value = ""));
       try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
       order = shuffle(order); refresh();
-      showDone(r.n);
+      showDone(r.n, f.title);
     } catch (e) {
       $("#msg").className = "msg error"; $("#msg").textContent = e.message.includes("fetch") ? "הסטודיו לא פועל. הפעילו שוב את puzzle-studio.cmd" : e.message;
       $("#save").disabled = false;
@@ -295,7 +338,7 @@
       const r = await post("/api/link", { link, date: fromInputDate(date) });
       if (!r.ok) throw new Error(errText(r.error));
       $("#linkMsg").textContent = ""; $("#link").value = "";
-      showDone(r.n);
+      showDone(r.n, r.title);
     } catch (e) {
       $("#linkMsg").className = "msg error"; $("#linkMsg").textContent = e.message.includes("fetch") ? "הסטודיו לא פועל. הפעילו שוב את puzzle-studio.cmd" : e.message;
     }
@@ -315,6 +358,7 @@
     try {
       const s = await (await fetch("/api/status")).json();
       $("#liveLink").href = s.liveUrl;
+      liveUrl = s.liveUrl;
       $("#publishBar").classList.toggle("pending", s.pending);
       $("#publishBtn").hidden = !s.pending;
       $("#pubText").textContent = !s.ok ? "⚠️ לא ניתן לפרסם מהתיקייה הזאת"
