@@ -37,6 +37,20 @@ const VERCEL = (VERCEL_CMD ? `"${VERCEL_CMD}"` : "npx -y vercel")
 const vercel = (args, input) =>
   execSync(`${VERCEL} ${args.join(" ")}`, { input, encoding: "utf8", stdio: [input == null ? "ignore" : "pipe", "pipe", "pipe"] });
 
+// On a computer where Vercel was never logged in, let the user log in (in the browser) first.
+function ensureVercelLogin() {
+  try {
+    const who = vercel(["whoami"]).trim().split("\n").pop();
+    console.log(`Vercel account: ${who}`);
+  } catch (e) {
+    console.log("\nVercel isn't logged in on this computer. Log in once: follow the prompts below");
+    console.log("(a browser page will open; sign in with the same Vercel account as before).\n");
+    execSync(`${VERCEL} login`, { stdio: "inherit" });
+    const who = vercel(["whoami"]).trim().split("\n").pop();
+    console.log(`\nVercel account: ${who}`);
+  }
+}
+
 function setEnv(name, value) {
   try { vercel(["env", "rm", name, "production", "--yes"]); } catch (e) { /* not set yet */ }
   vercel(["env", "add", name, "production"], value);
@@ -50,6 +64,19 @@ async function checkToken(token) {
 
 (async () => {
   console.log("=== 4x4 online studio: one-time setup ===\n");
+
+  // 0. Make sure Vercel is reachable before asking for any secrets.
+  try {
+    ensureVercelLogin();
+  } catch (e) {
+    console.log("\nCouldn't log in to Vercel: " + String(e.stderr || e.message).split("\n").filter(Boolean).pop());
+    return;
+  }
+  if (!fs.existsSync(path.join(__dirname, ".vercel", "project.json"))) {
+    console.log("\nThis folder isn't linked to the Vercel project; linking it now...");
+    vercel(["link", "--yes", "--project", "connections"]);
+  }
+  console.log("");
 
   // 1. Password
   let pw;
