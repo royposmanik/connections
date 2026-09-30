@@ -345,6 +345,10 @@
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<!-- Vercel Web Analytics (cookieless). Page views are sent manually from route() because
+     puzzle pages live in the #hash, which automatic tracking ignores. -->
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js" data-disable-auto-track="1"></script>
 <script src="puzzles.js"></script>
 <script src="games.js"></script>
 <script>
@@ -456,6 +460,7 @@
     if (lang === "en") url.searchParams.set("lang", "en"); else url.searchParams.delete("lang");
     history.replaceState(null, "", url);
     applyLang();
+    skipTrack = true; // re-render only; not a new page view
     route();
   });
 
@@ -533,9 +538,13 @@
 
   // ---------- Routing ----------
   let lastGameN = null;
+  let skipTrack = false;
   function route() {
     const m = location.hash.match(/^#\/p\/(\d+)/);
     const p = m && byN(Number(m[1]));
+    // Analytics: report each puzzle as its own page, e.g. /p/191 (grouped under /p/[n]).
+    if (!skipTrack) window.va("pageview", p ? { route: "/p/[n]", path: "/p/" + p.n } : { route: "/", path: "/" });
+    skipTrack = false;
     if (p && p.groups) {
       $("#home").hidden = true; $("#game").hidden = false;
       openGame(p);
