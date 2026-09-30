@@ -104,6 +104,8 @@
   .stats { display: flex; gap: 28px; }
   .stat b { display: block; font-size: 28px; font-weight: 900; line-height: 1.1; }
   .stat span { font-size: 13px; color: var(--muted); }
+  .stat b .swatch { display: inline-block; width: 18px; height: 18px; border-radius: 5px; margin-inline-end: 6px; vertical-align: -1px; }
+  .stat b.word { font-size: 20px; line-height: 34px; }
 
   /* Archive */
   .archive-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
@@ -275,10 +277,10 @@
         <a class="btn primary sm" id="latestBtn"></a>
       </div>
       <div class="stats">
-        <div class="stat"><b id="statSolved">0</b><span data-i18n="statSolved">נפתרו</span></div>
-        <div class="stat"><b id="statRate">–</b><span data-i18n="statRate">ממוצע טעויות</span></div>
-        <div class="stat"><b id="statPerfect">0</b><span data-i18n="statPerfect">בלי טעויות</span></div>
-        <div class="stat"><b id="statLeft">0</b><span data-i18n="statLeft">נשארו</span></div>
+        <div class="stat"><b id="statPlayers">–</b><span data-i18n="statPlayers">שיחקו</span></div>
+        <div class="stat"><b id="statSolvedPct">–</b><span data-i18n="statSolvedPct">פתרו</span></div>
+        <div class="stat"><b id="statAvg">–</b><span data-i18n="statRate">ממוצע טעויות</span></div>
+        <div class="stat"><b id="statHard">–</b><span data-i18n="statHard">הקבוצה הכי קשה</span></div>
       </div>
     </section>
 
@@ -371,7 +373,7 @@
       lead: "משחק הרביעיות שכבש את העולם. 16 מילים, 4 קבוצות, בלי הגבלת ניסיונות. כל החידות מכל הזמנים, כאן.",
       playLatest: "לחידה האחרונה ←", random: "🎲 חידה אקראית",
       demoTitle: "צבעים", demoWords: "אדום, כחול, ירוק, צהוב",
-      latestLabel: "החידה האחרונה", statSolved: "נפתרו", statRate: "ממוצע טעויות", statPerfect: "בלי טעויות", statLeft: "נשארו",
+      latestLabel: "החידה האחרונה", statPlayers: "שיחקו", statSolvedPct: "פתרו", statRate: "ממוצע טעויות", statHard: "הקבוצה הכי קשה", colors: ["צהוב", "ירוק", "כחול", "סגול"],
       allPuzzles: "כל החידות", filterAria: "סינון",
       fAll: "הכל", fTodo: "עוד לא פתרתי", fDone: "סיימתי", fIntl: "🌍 גם בלי עברית",
       howTitle: "איך משחקים?",
@@ -402,7 +404,7 @@
       lead: "The word-grouping game that took over the world. 16 words, 4 groups, unlimited tries. Every puzzle ever, right here.",
       playLatest: "Latest puzzle →", random: "🎲 Random puzzle",
       demoTitle: "Colors", demoWords: "Red, Blue, Green, Yellow",
-      latestLabel: "Latest puzzle", statSolved: "Solved", statRate: "Avg. mistakes", statPerfect: "Perfect", statLeft: "Left",
+      latestLabel: "Latest puzzle", statPlayers: "Played", statSolvedPct: "Solved", statRate: "Avg. mistakes", statHard: "Hardest group", colors: ["Yellow", "Green", "Blue", "Purple"],
       allPuzzles: "All puzzles", filterAria: "Filter",
       fAll: "All", fTodo: "Not solved yet", fDone: "Finished", fIntl: "🌍 No Hebrew needed",
       howTitle: "How to play",
@@ -619,18 +621,35 @@
     return "";
   }
 
+  // Everyone's results for the latest puzzle (aggregate only; cached for a minute by the server).
+  let community = null, communityAt = 0;
+  function showCommunity() {
+    const c = community;
+    const has = c && c.configured && c.tried > 0;
+    $("#statPlayers").textContent = c && c.configured ? c.tried : "–";
+    $("#statSolvedPct").textContent = has ? Math.round((c.won / c.tried) * 100) + "%" : "–";
+    $("#statAvg").textContent = has && c.avgMistakes != null ? String(+c.avgMistakes.toFixed(1)) : "–";
+    const hard = $("#statHard");
+    hard.classList.toggle("word", !!has);
+    hard.innerHTML = has && c.hardest != null ? `<i class="swatch lv${c.hardest}"></i>${I18N[lang].colors[c.hardest]}` : "–";
+  }
+  function loadCommunityStats() {
+    showCommunity();
+    if (location.protocol === "file:" || Date.now() - communityAt < 60000) return;
+    communityAt = Date.now();
+    fetch("/api/puzzle-stats?n=" + newest.n)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((c) => { if (c && c.ok) { community = c; showCommunity(); } })
+      .catch(() => {});
+  }
+
   function renderHome() {
     const states = list.map(loadState);
     const won = states.filter((s) => s.status === "won").length;
     const lost = states.filter((s) => s.status === "lost").length;
-    const perfect = states.filter((s) => s.status === "won" && s.mistakes === 0).length;
-    $("#statSolved").textContent = won;
-    const totalMistakes = states.filter((s) => s.status === "won").reduce((t, s) => t + s.mistakes, 0);
-    $("#statRate").textContent = won ? String(+(totalMistakes / won).toFixed(1)) : "–";
-    $("#statPerfect").textContent = perfect;
-    $("#statLeft").textContent = list.length - won - lost;
     $("#progressBar").style.width = ((won + lost) / list.length * 100) + "%";
 
+    loadCommunityStats();
     const ns = loadState(newest);
     $("#latestTitle").textContent = `${t("puzzleN", { n: newest.n })} · ${fmt(newest.date)}`;
     $("#latestBtn").href = "#/p/" + newest.n;
