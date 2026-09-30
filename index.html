@@ -308,7 +308,7 @@
       </div>
       <div>
         <h2 data-i18n="aboutTitle">על האתר</h2>
-        <p data-i18n="aboutText">חידות 4x4 בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך.</p>
+        <p data-i18n="aboutText">חידות 4x4 בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך. לצורך סטטיסטיקה האתר סופר באופן אנונימי כמה שחקנים פותרים כל חידה, בלי שמות ובלי מידע אישי.</p>
       </div>
     </section>
   </main>
@@ -380,7 +380,7 @@
       how3: "אין הגבלה על מספר הניסיונות, אבל כל טעות נספרת. נתקעתם? אפשר לחשוף את הפתרון.",
       how4: "הקבוצות מדורגות מצהוב (הכי קל) ועד סגול (הכי מתעתע).",
       aboutTitle: "על האתר",
-      aboutText: "חידות 4x4 בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך.",
+      aboutText: "חידות 4x4 בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך. לצורך סטטיסטיקה האתר סופר באופן אנונימי כמה שחקנים פותרים כל חידה, בלי שמות ובלי מידע אישי.",
       back: "→ כל החידות", prev: "→ הקודמת", next: "הבאה ←",
       hint: "מצאו ארבע קבוצות של ארבע מילים שיש ביניהן קשר.",
       shuffle: "ערבוב", clear: "ניקוי בחירה", submit: "שליחה", giveUp: "נתקעתי, להראות את הפתרון",
@@ -411,7 +411,7 @@
       how3: "Unlimited tries, but every mistake counts. Stuck? You can reveal the answer.",
       how4: "Groups are ranked from yellow (easiest) to purple (trickiest).",
       aboutTitle: "About",
-      aboutText: "Hebrew 4x4 puzzles, written by Roy Posmanik (and sometimes friends) since June 2025. A new puzzle goes up a few times a week. The puzzles themselves are in Hebrew; look for 🌍 to find ones you can play without it. The site remembers which puzzles you've solved (in your browser only), so you know where to pick up.",
+      aboutText: "Hebrew 4x4 puzzles, written by Roy Posmanik (and sometimes friends) since June 2025. A new puzzle goes up a few times a week. The puzzles themselves are in Hebrew; look for 🌍 to find ones you can play without it. The site remembers which puzzles you've solved (in your browser only), so you know where to pick up. For statistics, the site anonymously counts how many players solve each puzzle (no names, no personal data).",
       back: "← All puzzles", prev: "← Previous", next: "Next →",
       hint: "Find four groups of four words that share a connection.",
       shuffle: "Shuffle", clear: "Deselect", submit: "Submit", giveUp: "I'm stuck, show the answer",
@@ -518,6 +518,24 @@
     return arr;
   }
   const finished = (p) => ["won", "lost"].includes(loadState(p).status);
+
+  // ---------- Anonymous play stats ----------
+  // A random id per browser (no personal data) so each player is counted once per puzzle.
+  let pid = null;
+  try { pid = localStorage.getItem("mh-pid"); } catch (e) {}
+  if (!pid) {
+    pid = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36)).toLowerCase();
+    try { localStorage.setItem("mh-pid", pid); } catch (e) {}
+  }
+  function track(p, s, e, d) {
+    if (s.replay || location.protocol === "file:") return; // replays and local copies don't count
+    try {
+      fetch("/api/track", {
+        method: "POST", keepalive: true, headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pid, n: p.n, e, d }),
+      }).catch(() => {});
+    } catch (err) {}
+  }
 
   // ---------- Theme ----------
   const root = document.documentElement;
@@ -759,6 +777,7 @@
     const key = idx.join(",");
     if (s.guesses.some((g) => g.key === key)) { toast(t("tried")); return; }
     const levels = idx.map((i) => i >> 2);
+    if (s.guesses.length === 0) track(p, s, "start");
     s.guesses.push({ key, levels });
     s.status = "playing";
     const counts = [0, 0, 0, 0];
@@ -766,7 +785,8 @@
     // Correct group: reveal immediately, no delay.
     if (counts.includes(4)) {
       s.solved.push(levels[0]);
-      if (s.solved.length === 4) s.status = "won";
+      track(p, s, "group", { lvl: levels[0] });
+      if (s.solved.length === 4) { s.status = "won"; track(p, s, "won", { mistakes: s.mistakes }); }
       saveState(p, s);
       sel.clear();
       cur.animate = s.solved.length - 1;
@@ -783,6 +803,7 @@
     await wait(els.length * 90 + 250);
 
     s.mistakes++;
+    track(p, s, "wrong", { key });
     const oneAway = counts.includes(3);
     tileEls().forEach((el) => { el.classList.remove("hop"); el.classList.add("shake"); });
     toast(oneAway ? t("oneAway") : t("notQuite"));
@@ -802,6 +823,7 @@
     if (cur.busy || !confirm(t("confirmReveal"))) return;
     cur.busy = true;
     s.status = "lost";
+    track(p, s, "revealed", { mistakes: s.mistakes });
     saveState(p, s);
     sel.clear();
     cur.revealed = s.solved.length;
@@ -862,6 +884,7 @@
     });
     $("#replayBtn").addEventListener("click", () => {
       const s = freshState(cur.p);
+      s.replay = true; // replays don't count in the stats
       saveState(cur.p, s);
       cur.s = s; cur.sel.clear(); cur.revealed = null;
       drawGame();

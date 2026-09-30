@@ -74,6 +74,22 @@
   .success h2 { font-size: 28px; margin: 0 0 8px; }
   .success .actions { justify-content: center; }
   [hidden] { display: none !important; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .kpi b { display: block; font-size: 28px; font-weight: 900; line-height: 1.1; }
+  .kpi span { font-size: 13px; color: var(--muted); }
+  .card h3 { margin: 0 0 12px; font-size: 18px; }
+  .scroll { overflow-x: auto; }
+  table.stats { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.stats th { text-align: start; font-weight: 500; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.stats td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.stats td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.stats a { color: inherit; font-weight: 700; }
+  .chip-lv { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-inline-end: 6px; vertical-align: 0; }
+  .muted { color: var(--muted); }
+  .bar { height: 6px; background: var(--tile); border-radius: 99px; overflow: hidden; margin-top: 4px; min-width: 60px; }
+  .bar i { display: block; height: 100%; background: var(--green); }
+  @media (max-width: 600px) { .kpis { grid-template-columns: 1fr 1fr; } }
   .head-links { display: flex; gap: 16px; }
   .login { max-width: 420px; margin: 40px auto; }
   .login h2 { margin: 0 0 4px; font-size: 24px; }
@@ -131,6 +147,7 @@
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" aria-selected="true" data-tab="create">✏️ חידה חדשה</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="link">🔗 מקישור swellgarfo</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="stats">📊 סטטיסטיקה</button>
   </div>
 
   <!-- ===== Create ===== -->
@@ -171,6 +188,11 @@
       <button class="btn primary" id="saveLink">הוספה לאתר</button>
       <span class="msg" id="linkMsg"></span>
     </div>
+  </section>
+
+  <!-- ===== Stats ===== -->
+  <section id="tab-stats" hidden>
+    <div id="statsBody"><p class="sub">טוען…</p></div>
   </section>
 
   <!-- ===== Success ===== -->
@@ -280,6 +302,8 @@
     document.querySelectorAll(".tab").forEach((x) => x.setAttribute("aria-selected", String(x === t)));
     $("#tab-create").hidden = t.dataset.tab !== "create";
     $("#tab-link").hidden = t.dataset.tab !== "link";
+    $("#tab-stats").hidden = t.dataset.tab !== "stats";
+    if (t.dataset.tab === "stats") loadStats();
     $("#done").hidden = true;
   }));
 
@@ -308,7 +332,7 @@
 
   function showDone(n, title, id) {
     lastId = id;
-    $("#tab-create").hidden = true; $("#tab-link").hidden = true; $("#done").hidden = false;
+    $("#tab-create").hidden = true; $("#tab-link").hidden = true; $("#tab-stats").hidden = true; $("#done").hidden = false;
     $("#doneTitle").textContent = `נוספה חידה #${n}`;
     $("#playLink").href = `${SITE}#/p/${n}`;
     // Keep a Hebrew word first on each line so WhatsApp lays the line out right-to-left.
@@ -434,6 +458,109 @@
     $("#publishBtn").disabled = false;
   });
 
+  // ---------- Stats (online only) ----------
+  const LEVEL_BY_COLOR = { "#fbd400": 0, "#69e352": 1, "#5492ff": 2, "#df7bea": 3 };
+  const MONTHS_EN = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  let siteData = null;
+
+  // Loads the site's puzzle files so stats can show words and group names by puzzle number.
+  function loadSiteData() {
+    if (siteData) return Promise.resolve(siteData);
+    const load = (src) => new Promise((ok, fail) => {
+      const el = document.createElement("script"); el.src = src + "?t=" + Date.now(); el.onload = ok; el.onerror = fail;
+      document.head.appendChild(el);
+    });
+    return Promise.all([load("/puzzles.js"), load("/games.js")]).then(() => {
+      const list = [];
+      window.PUZZLES.ARCHIVE.forEach((id) => list.push({ id, date: null }));
+      window.PUZZLES.DATED.slice().reverse().forEach(([d, id]) => list.push({ id, date: d }));
+      siteData = {};
+      list.forEach((p, i) => {
+        const g = window.GAMES[p.id];
+        if (!g) return;
+        const groups = g.groups.map((x, k) => ({ d: x.d, w: x.w, lvl: LEVEL_BY_COLOR[(x.c || "").toLowerCase()] ?? k }))
+          .sort((a, b) => a.lvl - b.lvl);
+        siteData[i + 1] = { date: p.date, groups, words: groups.flatMap((x) => x.w) };
+      });
+      return siteData;
+    });
+  }
+
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+  const fmtDay = (iso) => { const [y, m, d] = iso.split("-").map(Number); return `${MONTHS_EN[m - 1]} ${d}`; };
+  const fmtDate = (s) => { if (!s) return "ארכיון"; const [d, m] = s.split("/").map(Number); return `${MONTHS_EN[m - 1]} ${d}`; };
+
+  async function loadStats() {
+    const body = $("#statsBody");
+    if (LOCAL) {
+      body.innerHTML = `<div class="card"><p>הסטטיסטיקה זמינה בסטודיו שבאתר: <a href="https://connections-roy.vercel.app/studio" target="_blank">connections-roy.vercel.app/studio</a></p></div>`;
+      return;
+    }
+    body.innerHTML = `<p class="sub">טוען…</p>`;
+    try {
+      const r = await fetch("/api/stats", { cache: "no-store" });
+      if (r.status === 401) return showLogin();
+      const st = await r.json();
+      if (!st.ok) throw new Error(st.error);
+      if (!st.configured) {
+        body.innerHTML = `<div class="card"><p>עוד לא מחובר מסד נתונים לסטטיסטיקה. אחרי שמחברים Upstash Redis בפרויקט ב-Vercel, הנתונים יתחילו להיאסף מהרגע הזה.</p></div>`;
+        return;
+      }
+      const data = await loadSiteData();
+      body.innerHTML = renderStats(st, data);
+    } catch (e) {
+      body.innerHTML = `<p class="msg error">לא הצלחתי לטעון סטטיסטיקה: ${esc(e.message)}</p>`;
+    }
+  }
+
+  function renderStats(st, data) {
+    const today = st.daily[0];
+    const week = st.daily.slice(0, 7);
+    const sum = (arr, k) => arr.reduce((t, x) => t + x[k], 0);
+    const kpis = `<div class="kpis">
+      <div class="kpi"><b>${today.players}</b><span>שחקנים היום</span></div>
+      <div class="kpi"><b>${today.wins}</b><span>פתרונות היום</span></div>
+      <div class="kpi"><b>${sum(week, "starts")}</b><span>ניסיונות ב-7 ימים</span></div>
+      <div class="kpi"><b>${pct(sum(week, "wins"), sum(week, "starts"))}%</b><span>הצלחה ב-7 ימים</span></div>
+    </div>`;
+
+    const active = st.daily.filter((d) => d.players || d.starts);
+    const daily = `<div class="card"><h3>לפי יום</h3>${active.length ? `<div class="scroll"><table class="stats">
+      <tr><th>יום</th><th>שחקנים</th><th>התחילו חידה</th><th>פתרו</th><th>חשפו פתרון</th></tr>
+      ${active.map((d) => `<tr><td class="num">${fmtDay(d.day)}</td><td class="num">${d.players}</td><td class="num">${d.starts}</td><td class="num">${d.wins}</td><td class="num">${d.reveals}</td></tr>`).join("")}
+    </table></div>` : `<p class="muted">עוד אין נתונים. הם יופיעו ברגע שמישהו ישחק.</p>`}</div>`;
+
+    const rows = st.puzzles.filter((p) => p.tried || p.won || p.revealed).map((p) => {
+      const info = data[p.n];
+      const tried = Math.max(p.tried, p.won + p.revealed);
+      // Hardest group: the one the fewest players managed to find.
+      let hard = "";
+      if (info && tried) {
+        const lvl = [0, 1, 2, 3].reduce((a, b) => (p.groups[b] < p.groups[a] ? b : a), 3);
+        hard = `<span class="chip-lv lv${lvl}"></span>${esc(info.groups[lvl].d)} <span class="muted">· ${pct(p.groups[lvl], tried)}% מצאו</span>`;
+      }
+      const wrong = p.wrong[0] && info
+        ? `${p.wrong[0].key.split(",").map((i) => esc(info.words[Number(i)] || "?")).join(", ")} <span class="muted">· ${p.wrong[0].count} פעמים</span>`
+        : `<span class="muted">–</span>`;
+      const avg = p.won ? (p.mistakesSum / p.won).toFixed(1).replace(/\.0$/, "") : "–";
+      return `<tr>
+        <td class="num"><a href="/#/p/${p.n}" target="_blank">#${p.n}</a><div class="muted">${info ? fmtDate(info.date) : ""}</div></td>
+        <td class="num">${tried}</td>
+        <td class="num">${p.won} <span class="muted">· ${pct(p.won, tried)}%</span><div class="bar"><i style="width:${pct(p.won, tried)}%"></i></div></td>
+        <td class="num">${p.revealed}</td>
+        <td class="num">${avg}</td>
+        <td class="num">${p.perfect}</td>
+        <td>${hard}</td>
+        <td>${wrong}</td>
+      </tr>`;
+    }).join("");
+    const puzzles = `<div class="card"><h3>לפי חידה</h3>${rows ? `<div class="scroll"><table class="stats">
+      <tr><th>חידה</th><th>ניסו</th><th>פתרו</th><th>חשפו</th><th>ממוצע טעויות</th><th>בלי טעויות</th><th>הקבוצה הכי קשה</th><th>הטעות הנפוצה</th></tr>
+      ${rows}</table></div>` : `<p class="muted">עוד אין נתונים.</p>`}</div>`;
+
+    return kpis + daily + puzzles + `<p class="sub">הנתונים אנונימיים. הטבלה היומית מציגה את 30 הימים האחרונים.</p>`;
+  }
+
   // ---------- Login (online only) ----------
   function showLogin(note) {
     $("#app").hidden = true; $("#login").hidden = false; $("#logoutLink").hidden = true;
@@ -482,6 +609,7 @@
     if (!$("#date").value) $("#date").value = toInputDate(todayStr);
     $("#linkDate").value = toInputDate(todayStr);
     refresh();
+    if (location.hash === "#stats") document.querySelector('.tab[data-tab="stats"]').click();
   }
 })();
 </script>
