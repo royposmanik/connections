@@ -489,8 +489,8 @@
     const t = (g.title || "").trim();
     const generic = !t || /^\d+[\/.]\d+/.test(t) || /^חידה( ל\S+)? #\d+$/.test(t);
     p.title = generic ? "" : t;
-    // Playable without Hebrew: every word is English letters, acronyms or numbers.
-    p.intl = p.words.every((w) => !/[֐-׿]/.test(w));
+    // Playable without Hebrew: set by hand in the studio, otherwise every word is English letters, acronyms or numbers.
+    p.intl = typeof g.intl === "boolean" ? g.intl : p.words.every((w) => !/[֐-׿]/.test(w));
   });
   const byN = (n) => list[n - 1];
   const newest = list[list.length - 1];

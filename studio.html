@@ -74,6 +74,8 @@
   .success h2 { font-size: 28px; margin: 0 0 8px; }
   .success .actions { justify-content: center; }
   [hidden] { display: none !important; }
+  .check { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; color: var(--text); font-size: 15px; cursor: pointer; }
+  .check input { width: 18px; height: 18px; }
   .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
   .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
   .kpi b { display: block; font-size: 28px; font-weight: 900; line-height: 1.1; }
@@ -158,6 +160,7 @@
         <div><label for="title">כותרת (לא חובה)</label><input type="text" id="title" placeholder="למשל: לפסח"></div>
         <div><label for="author">מחבר/ת (לא חובה)</label><input type="text" id="author" placeholder="ריק = רועי פוסמניק"></div>
       </div>
+      <label class="check"><input type="checkbox" id="intl"> 🌍 מתאימה גם למי שלא מבין עברית (תגית EN)</label>
     </div>
 
     <div id="groups"></div>
@@ -240,6 +243,7 @@
       date: $("#date").value ? fromInputDate($("#date").value) : "",
       title: $("#title").value.trim(),
       author: $("#author").value.trim(),
+      intl: $("#intl").checked,
       groups: [0, 1, 2, 3].map((i) => ({
         d: document.querySelector(`.desc[data-g="${i}"]`).value.trim(),
         w: [0, 1, 2, 3].map((j) => document.querySelector(`.word[data-g="${i}"][data-w="${j}"]`).value.trim()),
@@ -283,6 +287,7 @@
     if (f.date) $("#date").value = toInputDate(f.date);
     $("#title").value = f.title || "";
     $("#author").value = f.author || "";
+    $("#intl").checked = !!f.intl;
     (f.groups || []).forEach((g, i) => {
       document.querySelector(`.desc[data-g="${i}"]`).value = g.d || "";
       (g.w || []).forEach((w, j) => { document.querySelector(`.word[data-g="${i}"][data-w="${j}"]`).value = w || ""; });
@@ -294,6 +299,7 @@
   $("#clear").addEventListener("click", () => {
     if (!confirm("לנקות את כל הטופס?")) return;
     document.querySelectorAll("#tab-create input[type=text]").forEach((i) => (i.value = ""));
+    $("#intl").checked = false;
     refresh();
   });
 
@@ -386,12 +392,14 @@
   $("#save").addEventListener("click", async () => {
     const f = readForm();
     if (problems(f).length) return;
+    if (!confirmDate(f.date)) return;
     $("#save").disabled = true; $("#msg").className = "msg"; $("#msg").textContent = "שומר…";
     try {
       const r = await post("/api/create", f);
       if (!r.ok) throw new Error(errText(r.error));
       $("#msg").textContent = "";
       document.querySelectorAll("#tab-create input[type=text]").forEach((i) => (i.value = ""));
+      $("#intl").checked = false;
       try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
       order = shuffle(order); refresh();
       showDone(r.n, f.title, r.id);
@@ -404,6 +412,7 @@
   $("#saveLink").addEventListener("click", async () => {
     const link = $("#link").value.trim(), date = $("#linkDate").value;
     if (!link || !date) { $("#linkMsg").className = "msg error"; $("#linkMsg").textContent = "צריך קישור ותאריך"; return; }
+    if (!confirmDate(fromInputDate(date))) return;
     $("#saveLink").disabled = true; $("#linkMsg").className = "msg"; $("#linkMsg").textContent = "טוען את החידה…";
     try {
       const r = await post("/api/link", { link, date: fromInputDate(date) });
@@ -416,10 +425,19 @@
     $("#saveLink").disabled = false;
   });
 
+  let latestDate = null;
+  const dateKey = (d) => { const [dd, mm, yy] = d.split("/").map(Number); return yy * 10000 + mm * 100 + dd; };
+  // Returns false if the user backs out of saving a puzzle dated before the latest one.
+  function confirmDate(date) {
+    if (!latestDate || dateKey(date) >= dateKey(latestDate)) return true;
+    return confirm(`התאריך ${date} מוקדם מהחידה האחרונה (${latestDate}).\nהחידה תיכנס לפניה, והמספרים של החידות שאחריה ישתנו.\n\nלשמור בכל זאת?`);
+  }
+
   async function loadInfo() {
     try {
       const i = await (await fetch("/api/info")).json();
       if (!i.total) return null;
+      latestDate = i.latest[0];
       $("#sub").textContent = `כרגע יש באתר ${i.total} חידות. האחרונה פורסמה ב-${i.latest[0]}.`;
       return i;
     } catch (e) { return null; }
@@ -606,7 +624,7 @@
     let draft = null;
     try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch (e) {}
     if (draft) fillForm(draft);
-    if (!$("#date").value) $("#date").value = toInputDate(todayStr);
+    $("#date").value = toInputDate(todayStr);
     $("#linkDate").value = toInputDate(todayStr);
     refresh();
     if (location.hash === "#stats") document.querySelector('.tab[data-tab="stats"]').click();

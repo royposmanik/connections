@@ -70,7 +70,7 @@ async function fetchSwellgarfo(id) {
 }
 
 // Validates a hand-made puzzle: 4 groups (easy -> hard), each a description + 4 words, 16 distinct words.
-function buildOwnGame({ title = "", author = "", groups }) {
+function buildOwnGame({ title = "", author = "", groups, intl = false }) {
   if (!Array.isArray(groups) || groups.length !== 4) throw new Error("need exactly 4 groups");
   const out = groups.map((g, i) => {
     const d = String(g.d || "").trim();
@@ -82,7 +82,9 @@ function buildOwnGame({ title = "", author = "", groups }) {
   const words = out.flatMap((g) => g.w.map((x) => x.toLowerCase()));
   const dup = words.find((x, i) => words.indexOf(x) !== i);
   if (dup) throw new Error(`the word "${dup}" appears twice`);
-  return { title: String(title).trim(), author: String(author).trim(), groups: out };
+  const game = { title: String(title).trim(), author: String(author).trim(), groups: out };
+  if (intl) game.intl = true; // marked by hand as playable without Hebrew
+  return game;
 }
 
 const newOwnId = () => "own-" + Date.now().toString(36);

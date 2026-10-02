@@ -2,6 +2,11 @@
 // Every commit to main triggers a Vercel redeploy, which is how the online studio publishes.
 const REPO = process.env.GITHUB_REPO || "royposmanik/connections";
 const BRANCH = process.env.GITHUB_BRANCH || "main";
+// Commit as the GitHub "noreply" address so a real email never lands in the public history.
+const AUTHOR = {
+  name: process.env.COMMIT_NAME || "royposmanik",
+  email: process.env.COMMIT_EMAIL || "333896604+royposmanik@users.noreply.github.com",
+};
 
 async function gh(path, { method = "GET", body, raw = false } = {}) {
   const r = await fetch(`https://api.github.com/repos/${REPO}${path}`, {
@@ -43,7 +48,7 @@ async function commitFiles(parentSha, files, message) {
       tree: Object.entries(files).map(([path, content]) => ({ path, mode: "100644", type: "blob", content })),
     },
   });
-  const commit = await gh(`/git/commits`, { method: "POST", body: { message, tree: tree.sha, parents: [parentSha] } });
+  const commit = await gh(`/git/commits`, { method: "POST", body: { message, tree: tree.sha, parents: [parentSha], author: AUTHOR, committer: AUTHOR } });
   // Fast-forward only: if someone pushed in between, this fails and the caller retries on the new head.
   await gh(`/git/refs/heads/${BRANCH}`, { method: "PATCH", body: { sha: commit.sha, force: false } });
   return commit.sha;
