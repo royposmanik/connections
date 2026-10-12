@@ -83,6 +83,11 @@
   .hero h1 { font-size: clamp(48px, 9vw, 96px); font-weight: 900; line-height: 1; margin: 0 0 16px; letter-spacing: -1px; }
   .hero p.lead { font-size: clamp(18px, 2.4vw, 22px); color: var(--muted); margin: 0 0 28px; max-width: 30ch; }
   .cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .wa-join { display: inline-flex; align-items: center; gap: 10px; margin-top: 16px; padding: 10px 16px; border-radius: 999px; background: #25d366; color: #0b2e13; text-decoration: none; font-size: 15px; line-height: 1.3; }
+  .wa-join:hover { background: #20bd5a; }
+  .wa-join b { font-weight: 700; }
+  .wa-join small { display: block; font-size: 13px; opacity: .8; }
+  .endcard .wa-join { margin-top: 18px; }
   .demo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .demo .tile {
     aspect-ratio: 1.35; border-radius: 4px; display: grid; place-items: center;
@@ -263,6 +268,7 @@
           <a class="btn primary" id="playLatest" data-i18n="playLatest">לחידה האחרונה ←</a>
           <button class="btn ghost" id="randomBtn" data-i18n="random">🎲 חידה אקראית</button>
         </div>
+        <a class="wa-join" href="https://chat.whatsapp.com/GN0yeurPMlY9ABROrkKV80" target="_blank" rel="noopener"><span aria-hidden="true">📲</span><span><b data-i18n="waJoin">צרפו אותי לקבוצת הוואטסאפ</b><small data-i18n="waJoinSub">כדי לקבל התראה כשעולה חידה חדשה</small></span></a>
       </div>
       <div class="demo" aria-hidden="true">
         <div class="row lv0"><b data-i18n="demoTitle">צבעים</b><span data-i18n="demoWords">אדום, כחול, ירוק, צהוב</span></div>
@@ -377,6 +383,7 @@
       desc: "משחק הרביעיות שכבש את העולם – כל החידות מכל הזמנים במקום אחד.",
       lead: "משחק הרביעיות שכבש את העולם. 16 מילים, 4 קבוצות, בלי הגבלת ניסיונות. כל החידות מכל הזמנים, כאן.",
       playLatest: "לחידה האחרונה ←", random: "🎲 חידה אקראית",
+      waJoin: "צרפו אותי לקבוצת הוואטסאפ", waJoinSub: "כדי לקבל התראה כשעולה חידה חדשה",
       demoTitle: "צבעים", demoWords: "אדום, כחול, ירוק, צהוב",
       latestLabel: "החידה האחרונה", statPlayers: "שיחקו", statSolvedPct: "פתרו", statRate: "ממוצע טעויות", statHard: "הקבוצה הכי קשה", colors: ["צהוב", "ירוק", "כחול", "סגול"],
       allPuzzles: "כל החידות", filterAria: "סינון",
@@ -409,6 +416,7 @@
       desc: "The word-grouping game that took over the world – every puzzle ever, in one place.",
       lead: "The word-grouping game that took over the world. 16 words, 4 groups, unlimited tries. Every puzzle ever, right here.",
       playLatest: "Latest puzzle →", random: "🎲 Random puzzle",
+      waJoin: "Add me to the WhatsApp group", waJoinSub: "to get a push when a new puzzle is released",
       demoTitle: "Colors", demoWords: "Red, Blue, Green, Yellow",
       latestLabel: "Latest puzzle", statPlayers: "Played", statSolvedPct: "Solved", statRate: "Avg. mistakes", statHard: "Hardest group", colors: ["Yellow", "Green", "Blue", "Purple"],
       allPuzzles: "All puzzles", filterAria: "Filter",
@@ -911,6 +919,7 @@
         <button class="btn ghost sm" id="shareBtn">${t("share")}</button>
         <button class="btn ghost sm" id="replayBtn">${t("replay")}</button>
       </div>
+      <a class="wa-join" href="https://chat.whatsapp.com/GN0yeurPMlY9ABROrkKV80" target="_blank" rel="noopener"><span aria-hidden="true">📲</span><span><b>${t("waJoin")}</b><small>${t("waJoinSub")}</small></span></a>
     </div>`;
   }
 
