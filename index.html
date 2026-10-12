@@ -182,6 +182,9 @@
   .gtile:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
   .gtile.hop { animation: hop .3s ease; }
   .gtile.shake { animation: shake .4s ease; }
+  .gtile.hinted { box-shadow: inset 0 0 0 3px var(--text); }
+  .gtile.hinted[aria-pressed="true"] { box-shadow: inset 0 0 0 3px var(--tile-sel-text); }
+  .gtile.hinted.pop { animation: hop .4s ease 2; }
   .grow {
     grid-column: 1 / -1; min-height: 80px; border-radius: 4px; color: #1d1b16; text-align: center;
     display: flex; flex-direction: column; justify-content: center; padding: 8px 12px;
@@ -198,6 +201,7 @@
   .mistakes b.bump { animation: bump .35s ease; }
   @keyframes bump { 50% { transform: scale(1.5); } }
   .linkbtn { display: block; margin: 18px auto 0; background: none; border: 0; color: var(--muted); font-size: 14px; text-decoration: underline; cursor: pointer; }
+  .linkbtn + .linkbtn { margin-top: 10px; }
   .linkbtn:hover { color: var(--text); }
   .gcontrols { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
 
@@ -304,7 +308,7 @@
         <ol>
           <li data-i18n="how1">בכל חידה 16 מילים שמסתתרות בהן 4 קבוצות של 4.</li>
           <li data-i18n="how2">בוחרים 4 מילים שיש ביניהן קשר ולוחצים "אישור".</li>
-          <li data-i18n="how3">אין הגבלה על מספר הניסיונות, אבל כל טעות נספרת. נתקעתם? אפשר לחשוף את הפתרון.</li>
+          <li data-i18n="how3">אין הגבלה על מספר הניסיונות, אבל כל טעות נספרת. נתקעתם? אפשר לקבל רמז אחד או לחשוף את הפתרון.</li>
           <li data-i18n="how4">הקבוצות מדורגות מצהוב (הכי קל) ועד סגול (הכי מתעתע).</li>
         </ol>
       </div>
@@ -337,6 +341,7 @@
         <button class="btn ghost sm" id="clearBtn" data-i18n="clear">ניקוי בחירה</button>
         <button class="btn primary sm" id="submitBtn" data-i18n="submit">אישור</button>
       </div>
+      <button class="linkbtn" id="hintBtn" data-i18n="hint2">נתקעתי, רוצה רמז 💡</button>
       <button class="linkbtn" id="giveUpBtn" data-i18n="giveUp">נתקעתי, להראות את הפתרון</button>
     </div>
     <div id="gEnd"></div>
@@ -379,13 +384,14 @@
       howTitle: "איך משחקים?",
       how1: "בכל חידה 16 מילים שמסתתרות בהן 4 קבוצות של 4.",
       how2: "בוחרים 4 מילים שיש ביניהן קשר ולוחצים \"אישור\".",
-      how3: "אין הגבלה על מספר הניסיונות, אבל כל טעות נספרת. נתקעתם? אפשר לחשוף את הפתרון.",
+      how3: "אין הגבלה על מספר הניסיונות, אבל כל טעות נספרת. נתקעתם? אפשר לקבל רמז אחד או לחשוף את הפתרון.",
       how4: "הקבוצות מדורגות מצהוב (הכי קל) ועד סגול (הכי מתעתע).",
       aboutTitle: "על האתר",
       aboutText: "חידות 4x4 בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך. לצורך סטטיסטיקה האתר סופר באופן אנונימי כמה שחקנים פותרים כל חידה, בלי שמות ובלי מידע אישי.",
       back: "→ כל החידות", prev: "→ הקודמת", next: "הבאה ←",
       hint: "מצאו ארבע קבוצות של ארבע מילים שיש ביניהן קשר.",
       shuffle: "ערבוב", clear: "ניקוי בחירה", submit: "אישור", giveUp: "נתקעתי, להראות את הפתרון",
+      hint2: "נתקעתי, רוצה רמז 💡", hintShown: "שתי המילים המסומנות שייכות לאותה קבוצה",
       source: "לפתוח את החידה באתר המקורי", footer: "© רועי פוסמניק · 4x4",
       puzzleN: "חידה #{n}", archiveGroup: "ארכיון · יוני–יולי 2025", archive: "ארכיון", count: "{n} חידות",
       bPerfect: "מושלם", bSolved: "נפתר", bRevealed: "פתרון", bNew: "חדש",
@@ -410,13 +416,14 @@
       howTitle: "How to play",
       how1: "Each puzzle has 16 words hiding 4 groups of 4.",
       how2: "Pick 4 words that share a connection and press \"Submit\".",
-      how3: "Unlimited tries, but every mistake counts. Stuck? You can reveal the answer.",
+      how3: "Unlimited tries, but every mistake counts. Stuck? You can get one hint or reveal the answer.",
       how4: "Groups are ranked from yellow (easiest) to purple (trickiest).",
       aboutTitle: "About",
       aboutText: "Hebrew 4x4 puzzles, written by Roy Posmanik (and sometimes friends) since June 2025. A new puzzle goes up a few times a week. The puzzles themselves are in Hebrew; look for 🌍 to find ones you can play without it. The site remembers which puzzles you've solved (in your browser only), so you know where to pick up. For statistics, the site anonymously counts how many players solve each puzzle (no names, no personal data).",
       back: "← All puzzles", prev: "← Previous", next: "Next →",
       hint: "Find four groups of four words that share a connection.",
       shuffle: "Shuffle", clear: "Deselect", submit: "Submit", giveUp: "I'm stuck, show the answer",
+      hint2: "I'm stuck, give me a hint 💡", hintShown: "The two marked words belong to the same group",
       source: "Open on the original site", footer: "© Roy Posmanik · 4x4",
       puzzleN: "Puzzle #{n}", archiveGroup: "Archive · Jun–Jul 2025", archive: "Archive", count: "{n} puzzles",
       bPerfect: "Perfect", bSolved: "Solved", bRevealed: "Revealed", bNew: "New",
@@ -747,6 +754,7 @@
         b.dataset.idx = idx;
         b.textContent = w;
         b.setAttribute("aria-pressed", String(sel.has(idx)));
+        if (s.hint && s.hint.includes(idx)) b.classList.add("hinted");
         b.disabled = s.status === "won" || s.status === "lost";
         b.addEventListener("click", () => toggle(idx, b));
         board.appendChild(b);
@@ -755,6 +763,7 @@
     const over = s.status === "won" || s.status === "lost";
     $("#gPlay").hidden = over;
     $("#gHint").hidden = over || s.guesses.length > 0;
+    $("#hintBtn").hidden = over || !!s.hint;
     $("#gMistakes").innerHTML = `${t("mistakes")} <b>${s.mistakes}</b>`;
     $("#submitBtn").disabled = sel.size !== 4 || cur.busy;
     $("#clearBtn").disabled = sel.size === 0 || cur.busy;
@@ -835,6 +844,19 @@
     cur.busy = false;
     drawGame();
   }
+
+  // One hint per puzzle: mark two words from the easiest group not yet found.
+  $("#hintBtn").addEventListener("click", () => {
+    const { p, s } = cur;
+    if (cur.busy || s.hint) return;
+    const lvl = [0, 1, 2, 3].find((l) => !s.solved.includes(l));
+    const words = [0, 1, 2, 3].map((i) => lvl * 4 + i).sort(() => Math.random() - 0.5);
+    s.hint = words.slice(0, 2);
+    saveState(p, s);
+    drawGame();
+    document.querySelectorAll(".gtile.hinted").forEach((el) => el.classList.add("pop"));
+    toast(t("hintShown"));
+  });
 
   $("#giveUpBtn").addEventListener("click", giveUp);
   async function giveUp() {
