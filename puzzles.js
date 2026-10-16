@@ -2,6 +2,7 @@
 // Links resolve to https://connections.swellgarfo.com/game/<id>
 window.PUZZLES = {
   DATED: [
+    ["16/10/2026", "own-mvakcxvc"],
     ["10/10/2026", "own-mv2cdywm"],
     ["10/10/2026", "own-mv2bcjt1"],
     ["9/10/2026", "own-mv1cvrrz"],
