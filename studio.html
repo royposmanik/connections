@@ -623,6 +623,15 @@
     const todayStr = i ? i.today : `${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
     let draft = null;
     try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch (e) {}
+    // A link like /studio#draft=<base64url JSON> opens with that puzzle filled in.
+    const shared = location.hash.match(/^#draft=([\w-]+)$/);
+    if (shared) {
+      try {
+        const bin = atob(shared[1].replace(/-/g, "+").replace(/_/g, "/"));
+        draft = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
+      } catch (e) {}
+      history.replaceState(null, "", location.pathname);
+    }
     if (draft) fillForm(draft);
     $("#date").value = toInputDate(todayStr);
     $("#linkDate").value = toInputDate(todayStr);
