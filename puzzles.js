@@ -3,7 +3,6 @@
 window.PUZZLES = {
   DATED: [
     ["30/10/2026", "own-mvuicjmi"],
-    ["30/10/2026", "own-mvuhuaqj"],
     ["27/10/2026", "own-mvqq3dyf"],
     ["26/10/2026", "own-mvorpogg"],
     ["25/10/2026", "own-mvnbvgv6"],
