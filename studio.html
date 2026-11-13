@@ -37,7 +37,7 @@
   header a:hover { color: var(--text); }
   .sub { color: var(--muted); margin: -8px 0 24px; }
 
-  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
   .tab { padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 500; }
   .tab[aria-selected="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 
@@ -56,6 +56,17 @@
   .group input { background: rgba(255,255,255,.75); border-color: rgba(0,0,0,.08); color: #1d1b16; }
   .group .desc { margin-bottom: 8px; font-weight: 700; }
   .group .words { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .search-opts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: 14px; }
+  .search-opts label { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--text); font-weight: 400; cursor: pointer; }
+  .sr-summary { color: var(--muted); margin: 0 0 12px; }
+  .sr { padding: 14px 16px; }
+  .sr-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .sr-head a { color: var(--text); font-weight: 700; font-size: 17px; }
+  .sr-head span { color: var(--muted); font-size: 13px; }
+  .sr-group { border-radius: 10px; padding: 8px 12px; margin-top: 6px; color: #1d1b16; }
+  .sr-group b { display: block; font-size: 15px; }
+  .sr-group span { font-size: 14px; }
+  .sr-group mark { background: rgba(255,255,255,.8); color: inherit; border-radius: 4px; padding: 0 3px; font-weight: 700; }
   .lv0 { background: var(--yellow); } .lv1 { background: var(--green); } .lv2 { background: var(--blue); } .lv3 { background: var(--purple); }
 
   .preview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -157,6 +168,7 @@
     <button class="tab" role="tab" aria-selected="true" data-tab="create">✏️ חידה חדשה</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="link">🔗 מקישור swellgarfo</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="stats">📊 סטטיסטיקה</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="search">🔍 חיפוש</button>
   </div>
 
   <!-- ===== Create ===== -->
@@ -203,6 +215,20 @@
   <!-- ===== Stats ===== -->
   <section id="tab-stats" hidden>
     <div id="statsBody"><p class="sub">טוען…</p></div>
+  </section>
+
+  <!-- ===== Search ===== -->
+  <section id="tab-search" hidden>
+    <div class="card">
+      <label for="q">חיפוש בכל החידות</label>
+      <input type="text" id="q" placeholder="למשל: ירושלים, שירים, AA" autocomplete="off">
+      <div class="search-opts" role="radiogroup" aria-label="איפה לחפש">
+        <label><input type="radio" name="qIn" value="all" checked> בקטגוריות ובמילים</label>
+        <label><input type="radio" name="qIn" value="desc"> רק בשמות הקטגוריות</label>
+        <label><input type="radio" name="qIn" value="words"> רק במילים</label>
+      </div>
+    </div>
+    <div id="searchBody"></div>
   </section>
 
   <!-- ===== Success ===== -->
@@ -316,7 +342,9 @@
     $("#tab-create").hidden = t.dataset.tab !== "create";
     $("#tab-link").hidden = t.dataset.tab !== "link";
     $("#tab-stats").hidden = t.dataset.tab !== "stats";
+    $("#tab-search").hidden = t.dataset.tab !== "search";
     if (t.dataset.tab === "stats") loadStats();
+    if (t.dataset.tab === "search") { $("#q").focus(); runSearch(); }
     $("#done").hidden = true;
   }));
 
@@ -345,7 +373,7 @@
 
   function showDone(n, title, id) {
     lastId = id;
-    $("#tab-create").hidden = true; $("#tab-link").hidden = true; $("#tab-stats").hidden = true; $("#done").hidden = false;
+    $("#tab-create").hidden = true; $("#tab-link").hidden = true; $("#tab-stats").hidden = true; $("#tab-search").hidden = true; $("#done").hidden = false;
     $("#doneTitle").textContent = `נוספה חידה #${n}`;
     $("#playLink").href = `${SITE}#/p/${n}`;
     // Keep a Hebrew word first on each line so WhatsApp lays the line out right-to-left.
@@ -510,6 +538,44 @@
       return siteData;
     });
   }
+
+  // ---------- Search ----------
+  // Ignores case, niqqud, quote marks (״ ׳ " ') and dashes, so "צה״ל" matches "צהל".
+  const fold = (s) => String(s).toLowerCase().normalize("NFKD").replace(/[\u0591-\u05C7]/g, "")
+    .replace(/[״׳"'`‘’“”\-–־]/g, "").replace(/\s+/g, " ").trim();
+  const MAX_RESULTS = 100;
+
+  async function runSearch() {
+    const body = $("#searchBody");
+    const q = fold($("#q").value);
+    if (q.length < 2) { body.innerHTML = ""; return; }
+    let data;
+    try { data = await loadSiteData(); } catch (e) { body.innerHTML = `<p class="msg error">לא הצלחתי לטעון את החידות.</p>`; return; }
+    if (fold($("#q").value) !== q) return; // the query changed while loading
+    const where = document.querySelector('input[name="qIn"]:checked').value;
+    const hits = [];
+    Object.keys(data).map(Number).sort((a, b) => b - a).forEach((n) => {
+      const groups = data[n].groups.map((g) => ({
+        ...g,
+        descHit: where !== "words" && fold(g.d).includes(q),
+        wordHits: where === "desc" ? [] : g.w.map((w) => fold(w).includes(q)),
+      })).filter((g) => g.descHit || g.wordHits.some(Boolean));
+      if (groups.length) hits.push({ n, date: data[n].date, groups });
+    });
+    const count = hits.reduce((a, h) => a + h.groups.length, 0);
+    if (!hits.length) { body.innerHTML = `<p class="sr-summary">לא נמצאו תוצאות.</p>`; return; }
+    const shown = hits.slice(0, MAX_RESULTS);
+    body.innerHTML = `<p class="sr-summary">${count === 1 ? "קבוצה אחת" : `${count} קבוצות`} ב-${hits.length === 1 ? "חידה אחת" : `${hits.length} חידות`}${hits.length > MAX_RESULTS ? ` (מוצגות ${MAX_RESULTS} האחרונות)` : ""}</p>`
+      + shown.map((h) => `<div class="card sr">
+        <div class="sr-head"><a href="${SITE}#/p/${h.n}" target="_blank" rel="noopener">חידה #${h.n}</a><span>${fmtDate(h.date)}</span></div>
+        ${h.groups.map((g) => `<div class="sr-group lv${g.lvl}" dir="auto">
+          <b>${g.descHit ? `<mark>${esc(g.d)}</mark>` : esc(g.d)}</b>
+          <span>${g.w.map((w, i) => (g.wordHits[i] ? `<mark>${esc(w)}</mark>` : esc(w))).join(", ")}</span>
+        </div>`).join("")}
+      </div>`).join("");
+  }
+  $("#q").addEventListener("input", runSearch);
+  document.querySelectorAll('input[name="qIn"]').forEach((r) => r.addEventListener("change", runSearch));
 
   const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
   const fmtDay = (iso) => { const [y, m, d] = iso.split("-").map(Number); return `${MONTHS_EN[m - 1]} ${d}`; };
