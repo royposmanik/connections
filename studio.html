@@ -110,6 +110,15 @@
   .bar { height: 6px; background: var(--tile); border-radius: 99px; overflow: hidden; margin-top: 4px; min-width: 60px; }
   .bar i { display: block; height: 100%; background: var(--green); }
   @media (max-width: 600px) { .kpis { grid-template-columns: 1fr 1fr; } }
+  .more { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; width: 24px; height: 24px; cursor: pointer; font-size: 12px; line-height: 1; margin-inline-end: 6px; padding: 0; }
+  .more[aria-expanded="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  tr.detail td { background: var(--bg); }
+  .det { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px 20px; padding: 6px 2px; }
+  .det > div { min-width: 0; }
+  .det h4 { margin: 0 0 4px; font-size: 13px; font-weight: 500; color: var(--muted); }
+  .det p { margin: 0; }
+  .stack { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: var(--tile); margin: 6px 0 4px; }
+  .stack i { display: block; height: 100%; }
   .head-links { display: flex; gap: 16px; }
   .login { max-width: 420px; margin: 40px auto; }
   .login h2 { margin: 0 0 4px; font-size: 24px; }
@@ -635,7 +644,7 @@
         : `<span class="muted">–</span>`;
       const avg = p.won ? (p.mistakesSum / p.won).toFixed(1).replace(/\.0$/, "") : "–";
       return `<tr>
-        <td class="num"><a href="/#/p/${p.n}" target="_blank">#${p.n}</a><div class="muted">${info ? fmtDate(info.date) : ""}</div></td>
+        <td class="num"><button class="more" type="button" data-n="${p.n}" aria-expanded="false" aria-label="פרטים על השחקנים">▾</button><a href="/#/p/${p.n}" target="_blank">#${p.n}</a><div class="muted">${info ? fmtDate(info.date) : ""}</div></td>
         <td class="num">${tried}</td>
         <td class="num">${p.won} <span class="muted">· ${pct(p.won, tried)}%</span><div class="bar"><i style="width:${pct(p.won, tried)}%"></i></div></td>
         <td class="num">${p.revealed}</td>
@@ -643,14 +652,83 @@
         <td class="num">${p.perfect}</td>
         <td>${hard}</td>
         <td>${wrong}</td>
-      </tr>`;
+      </tr>
+      <tr class="detail" id="det-${p.n}" hidden><td colspan="8">${details(p, info, tried)}</td></tr>`;
     }).join("");
     const puzzles = `<div class="card"><h3>לפי חידה</h3>${rows ? `<div class="scroll"><table class="stats">
       <tr><th>חידה</th><th>ניסו</th><th>פתרו</th><th>חשפו</th><th>ממוצע טעויות</th><th>בלי טעויות</th><th>הקבוצה הכי קשה</th><th>הטעות הנפוצה</th></tr>
       ${rows}</table></div>` : `<p class="muted">עוד אין נתונים.</p>`}</div>`;
 
-    return kpis + daily + puzzles + `<p class="sub">הנתונים אנונימיים. הטבלה היומית מציגה את 30 הימים האחרונים.</p>`;
+    return kpis + daily + puzzles + `<p class="sub">הנתונים אנונימיים. הטבלה היומית מציגה את 30 הימים האחרונים. לחיצה על ▾ ליד חידה מציגה פרטים על השחקנים שלה.</p>`;
   }
+
+  // ---------- Per-puzzle player details ----------
+  const NOT_YET = `<span class="muted">עוד אין נתונים (נאסף מ-20/11/2026)</span>`;
+  const regionName = (() => { try { const dn = new Intl.DisplayNames(["he"], { type: "region" }); return (c) => dn.of(c) || c; } catch (e) { return (c) => c; } })();
+  const flag = (c) => String.fromCodePoint(...[...c].map((ch) => 0x1f1e6 + ch.charCodeAt(0) - 65));
+  const isoOf = (d) => { const [dd, mm, yy] = d.split("/").map(Number); return `${yy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`; };
+
+  function details(p, info, tried) {
+    const starters = p.tried;
+    const left = Math.max(0, tried - p.won - p.revealed);
+    const who = starters
+      ? `<p><b>${p.returning}</b> קבועים <span class="muted">(שיחקו גם חידות אחרות)</span> · <b>${starters - p.returning}</b> רק בחידה הזאת</p>`
+      : `<p class="muted">אף אחד עוד לא ניסה ניחוש.</p>`;
+
+    let when = `<p class="muted">אין נתונים מהימים האלה.</p>`;
+    const dayCounts = Object.entries(p.days);
+    if (info && info.date && dayCounts.length) {
+      const rel = isoOf(info.date);
+      const onDay = p.days[rel] || 0;
+      const later = dayCounts.filter(([d]) => d > rel).reduce((t, [, c]) => t + c, 0);
+      const firstWeek = dayCounts.filter(([d]) => d > rel && d <= isoOf(fmtPlus(info.date, 7))).reduce((t, [, c]) => t + c, 0);
+      when = `<p><b>${onDay}</b> ביום הפרסום · <b>${later}</b> אחר כך <span class="muted">(${firstWeek} מהם בשבוע הראשון)</span></p>`;
+    }
+
+    const quit = `<p><b>${left}</b> התחילו ועזבו בלי לפתור או לחשוף${tried ? ` <span class="muted">· ${pct(left, tried)}%</span>` : ""}</p>`;
+
+    const bTotal = p.buckets.reduce((a, b) => a + b, 0);
+    const labels = ["בלי טעויות", "1 עד 3", "4 עד 10", "יותר מ-10"];
+    const mist = bTotal
+      ? `<div class="stack">${p.buckets.map((b, i) => (b ? `<i class="lv${i}" style="width:${pct(b, bTotal)}%"></i>` : "")).join("")}</div>
+         <p>${p.buckets.map((b, i) => `<span class="chip-lv lv${i}"></span>${labels[i]}: <b>${b}</b>`).join(" · ")}</p>`
+      : NOT_YET;
+
+    const hints = p.hints
+      ? `<p><b>${p.hints}</b> לקחו רמז · <b>${p.hintsWon}</b> מהם פתרו</p>`
+      : (bTotal || Object.keys(p.countries).length ? `<p class="muted">אף אחד עוד לא לקח רמז.</p>` : NOT_YET);
+
+    const cc = Object.entries(p.countries).sort((a, b) => b[1] - a[1]);
+    const countries = cc.length
+      ? `<p>${cc.slice(0, 6).map(([c, k]) => (c === "??" ? `לא ידוע: <b>${k}</b>` : `${flag(c)} ${esc(regionName(c))}: <b>${k}</b>`)).join(" · ")}${cc.length > 6 ? ` <span class="muted">· ועוד ${cc.length - 6}</span>` : ""}</p>`
+      : NOT_YET;
+    const langs = Object.keys(p.langs).length
+      ? `<p>עברית: <b>${p.langs.he || 0}</b> · English: <b>${p.langs.en || 0}</b></p>`
+      : NOT_YET;
+
+    return `<div class="det">
+      <div><h4>מי שיחק</h4>${who}</div>
+      <div><h4>מתי</h4>${when}</div>
+      <div><h4>לא סיימו</h4>${quit}</div>
+      <div><h4>טעויות של מי שפתר</h4>${mist}</div>
+      <div><h4>רמזים</h4>${hints}</div>
+      <div><h4>מדינות</h4>${countries}</div>
+      <div><h4>שפת האתר</h4>${langs}</div>
+    </div>`;
+  }
+  // D/M/YYYY plus k days, in the same format.
+  function fmtPlus(d, k) {
+    const [dd, mm, yy] = d.split("/").map(Number);
+    const t = new Date(Date.UTC(yy, mm - 1, dd + k));
+    return `${t.getUTCDate()}/${t.getUTCMonth() + 1}/${t.getUTCFullYear()}`;
+  }
+  $("#statsBody").addEventListener("click", (e) => {
+    const btn = e.target.closest(".more");
+    if (!btn) return;
+    const row = document.getElementById("det-" + btn.dataset.n);
+    row.hidden = !row.hidden;
+    btn.setAttribute("aria-expanded", String(!row.hidden));
+  });
 
   // ---------- Login (online only) ----------
   function showLogin(note) {
