@@ -327,7 +327,7 @@
       </div>
       <div>
         <h2 data-i18n="aboutTitle">על האתר</h2>
-        <p data-i18n="aboutText">חידות 4x4 בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך. לצורך סטטיסטיקה האתר סופר באופן אנונימי כמה שחקנים פותרים כל חידה, בלי שמות ובלי מידע אישי.</p>
+        <p data-i18n="aboutText">חידות 4x4 בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך. לצורך סטטיסטיקה האתר סופר באופן אנונימי כמה שחקנים פותרים כל חידה ומאיזו מדינה הם משחקים, בלי שמות ובלי מידע אישי.</p>
       </div>
     </section>
   </main>
@@ -401,7 +401,7 @@
       how3: "אין הגבלה על מספר הניסיונות, אבל כל טעות נספרת. נתקעתם? אפשר לקבל רמז אחד או לחשוף את הפתרון.",
       how4: "הקבוצות מדורגות מצהוב (הכי קל) ועד סגול (הכי מתעתע).",
       aboutTitle: "על האתר",
-      aboutText: "חידות 4x4 בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך. לצורך סטטיסטיקה האתר סופר באופן אנונימי כמה שחקנים פותרים כל חידה, בלי שמות ובלי מידע אישי.",
+      aboutText: "חידות 4x4 בעברית, נכתבות על ידי רועי פוסמניק (ולפעמים חברים) מאז יוני 2025. חידה חדשה עולה כמה פעמים בשבוע. האתר זוכר אילו חידות כבר פתרת (בדפדפן שלך בלבד), כדי שתדעו מאיפה להמשיך. לצורך סטטיסטיקה האתר סופר באופן אנונימי כמה שחקנים פותרים כל חידה ומאיזו מדינה הם משחקים, בלי שמות ובלי מידע אישי.",
       back: "→ כל החידות", prev: "→ הקודמת", next: "הבאה ←",
       hint: "מצאו ארבע קבוצות של ארבע מילים שיש ביניהן קשר.",
       shuffle: "ערבוב", clear: "ניקוי בחירה", submit: "אישור", giveUp: "נתקעתי, להראות את הפתרון",
@@ -434,7 +434,7 @@
       how3: "Unlimited tries, but every mistake counts. Stuck? You can get one hint or reveal the answer.",
       how4: "Groups are ranked from yellow (easiest) to purple (trickiest).",
       aboutTitle: "About",
-      aboutText: "Hebrew 4x4 puzzles, written by Roy Posmanik (and sometimes friends) since June 2025. A new puzzle goes up a few times a week. The puzzles themselves are in Hebrew; look for 🌍 to find ones you can play without it. The site remembers which puzzles you've solved (in your browser only), so you know where to pick up. For statistics, the site anonymously counts how many players solve each puzzle (no names, no personal data).",
+      aboutText: "Hebrew 4x4 puzzles, written by Roy Posmanik (and sometimes friends) since June 2025. A new puzzle goes up a few times a week. The puzzles themselves are in Hebrew; look for 🌍 to find ones you can play without it. The site remembers which puzzles you've solved (in your browser only), so you know where to pick up. For statistics, the site anonymously counts how many players solve each puzzle and which country they play from (no names, no personal data).",
       back: "← All puzzles", prev: "← Previous", next: "Next →",
       hint: "Find four groups of four words that share a connection.",
       shuffle: "Shuffle", clear: "Deselect", submit: "Submit", giveUp: "I'm stuck, show the answer",
@@ -820,7 +820,7 @@
     const key = idx.join(",");
     if (s.guesses.some((g) => g.key === key)) { toast(t("tried")); return; }
     const levels = idx.map((i) => i >> 2);
-    if (s.guesses.length === 0) track(p, s, "start");
+    if (s.guesses.length === 0) track(p, s, "start", { lang });
     s.guesses.push({ key, levels });
     s.status = "playing";
     const counts = [0, 0, 0, 0];
@@ -868,6 +868,7 @@
     const words = [0, 1, 2, 3].map((i) => lvl * 4 + i).sort(() => Math.random() - 0.5);
     s.hint = words.slice(0, 2);
     saveState(p, s);
+    track(p, s, "hint");
     drawGame();
     document.querySelectorAll(".gtile.hinted").forEach((el) => el.classList.add("pop"));
     toast(t("hintShown"));
